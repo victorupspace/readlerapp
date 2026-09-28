@@ -1,0 +1,14 @@
+# Supabase CLI settings for Readler's Edge Functions.
+project_id = "readler"
+
+# JWT verification is off because the functions do their own gatekeeping:
+# origin allowlist, input caps and per-IP rate limits. This also keeps them
+# working with the newer publishable keys (sb_publishable_…), which are not JWTs.
+[functions.translate]
+verify_jwt = false
+
+[functions.usage]
+verify_jwt = false
+
+[functions.explain]
+verify_jwt = false

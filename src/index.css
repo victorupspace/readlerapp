@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- Theme tokens ----------
+   Every color is a CSS variable; components only use the semantic names below.
+   All text tokens keep at least 4.5:1 contrast on every surface in both themes. */
+
+:root {
+  --page: #f6f4ef;
+  --surface: #ffffff;
+  --tint: #f8f7fb;
+  --raised: #ffffff;
+  --segment: #ffffff;
+  --ink: #1b1a18;
+  --muted: #5c5851;
+  --subtle: #6f6a62;
+  --line: #e6e2d9;
+  --line-strong: #d2ccc0;
+  --accent: #3a4093;
+  --accent-strong: #2e3378;
+  --on-accent: #ffffff;
+  --danger: #a3322a;
+  --shadow-card: 0 1px 2px rgb(40 32 20 / 0.04), 0 16px 40px -24px rgb(40 32 20 / 0.16);
+  --shadow-pop: 0 2px 6px rgb(40 32 20 / 0.06), 0 18px 40px -12px rgb(40 32 20 / 0.2);
+  color-scheme: light;
+}
+
+.dark {
+  --page: #111216;
+  --surface: #17181d;
+  --tint: #1b1d24;
+  --raised: #22242c;
+  --segment: #2f323c;
+  --ink: #eceae4;
+  --muted: #ada9a1;
+  --subtle: #949088;
+  --line: #2a2c33;
+  --line-strong: #3b3e47;
+  --accent: #a9b1f6;
+  --accent-strong: #c3c9fa;
+  --on-accent: #111216;
+  --danger: #f2a194;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -24px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 2px 6px rgb(0 0 0 / 0.3), 0 18px 40px -12px rgb(0 0 0 / 0.65);
+  color-scheme: dark;
+}
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Newsreader Variable", ui-serif, Georgia, "Times New Roman", serif;
+
+  --ease-calm: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-fade-in: fade-in 200ms var(--ease-calm) both;
+  --animate-pop-in: pop-in 150ms var(--ease-calm) both;
+  --animate-pulse-soft: pulse-soft 1.6s ease-in-out infinite;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-tint: var(--tint);
+  --color-raised: var(--raised);
+  --color-segment: var(--segment);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+}
+
+/* ---------- Base ---------- */
+
+@layer base {
+  html {
+    background-color: var(--page);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--page);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--accent) 24%, transparent);
+  }
+
+  button:not(:disabled),
+  [role="button"],
+  [role="option"],
+  a[href] {
+    cursor: pointer;
+  }
+}
+
+/* ---------- Small utilities ---------- */
+
+/* Grows the hit area of a compact control to at least 44px without changing its look. */
+@utility hit-area {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+  }
+}
+
+/* Thin indeterminate progress line (top of the translation panel). */
+.progress-line {
+  position: absolute;
+  inset-block: 0;
+  width: 35%;
+  border-radius: 9999px;
+  background: var(--accent);
+  animation: progress-slide 1.1s var(--ease-calm) infinite;
+}
+
+@keyframes progress-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .progress-line {
+    width: 100%;
+    opacity: 0.5;
+    animation: none !important;
+  }
+}

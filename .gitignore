@@ -1,0 +1,30 @@
+# Dependencies and builds
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment (never commit keys)
+.env
+.env.*
+!.env.example
+
+# Supabase CLI state
+supabase/.branches
+supabase/.temp
+supabase/functions/.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor and OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.sw?
+.gstack/
+
+# gstack browse runtime state
+.gstack/
