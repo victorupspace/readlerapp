@@ -114,4 +114,5 @@ export const api = {
     call<TranslateResponse>('translate', request, signal),
   usage: (signal?: AbortSignal) => call<UsageResponse>('usage', undefined, signal),
   explain: (request: ExplainRequest, signal?: AbortSignal) => call<Explanation>('explain', request, signal),
+  explainStatus: (signal?: AbortSignal) => call<{ available: boolean }>('explain', undefined, signal),
 }

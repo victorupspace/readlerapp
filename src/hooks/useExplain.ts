@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api, errorMessage, isAbortError, type Explanation, type ExplainRequest } from '../lib/api'
+import { api, ApiError, errorMessage, isAbortError, type Explanation, type ExplainRequest } from '../lib/api'
 import { explainKey, readExplanation, writeExplanation } from '../lib/explain-cache'
+import { markExplainUnavailable } from './useExplainAvailable'
 
 export type ExplainState =
   | { status: 'idle' }
@@ -34,7 +35,8 @@ export function useExplain(request: ExplainRequest | null, delay = 0): ExplainSt
           setState({ key, data })
         })
         .catch((error: unknown) => {
-          if (!isAbortError(error)) setState({ key, error: errorMessage(error) })
+          if (error instanceof ApiError && error.code === 'NOT_CONFIGURED') markExplainUnavailable()
+          else if (!isAbortError(error)) setState({ key, error: errorMessage(error) })
         })
     }, delay)
     return () => {

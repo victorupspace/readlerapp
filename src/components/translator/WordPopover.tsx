@@ -1,6 +1,7 @@
 import { ArrowRight, Bookmark, BookOpen } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
+import { useExplainAvailable } from '../../hooks/useExplainAvailable'
 import { useWordTranslation } from '../../hooks/useTranslation'
 import { findEntry, toggleEntry, useVocabulary } from '../../hooks/useVocabulary'
 import { announce } from '../../lib/announce'
@@ -27,6 +28,7 @@ export function WordPopover({ word, wordLang, lookupLang, anchor, onClose, onExp
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
   const lookup = useWordTranslation(word, wordLang, lookupLang)
   const vocabulary = useVocabulary()
+  const explainAvailable = useExplainAvailable()
 
   const translation = lookup.status === 'success' ? lookup.translation : null
   const draft = translation ? studyDraft(word, wordLang, translation, lookupLang) : null
@@ -138,11 +140,13 @@ export function WordPopover({ word, wordLang, lookupLang, anchor, onClose, onExp
           />
           {saved ? 'Salvo no vocabulário' : 'Salvar no vocabulário'}
         </button>
-        <button type="button" className={rowClass} disabled={!translation} onClick={explain}>
-          <BookOpen size={18} strokeWidth={1.75} aria-hidden className="text-muted" />
-          <span className="flex-1">Ver exemplo e contexto</span>
-          <ArrowRight size={16} aria-hidden className="text-subtle" />
-        </button>
+        {explainAvailable && (
+          <button type="button" className={rowClass} disabled={!translation} onClick={explain}>
+            <BookOpen size={18} strokeWidth={1.75} aria-hidden className="text-muted" />
+            <span className="flex-1">Ver exemplo e contexto</span>
+            <ArrowRight size={16} aria-hidden className="text-subtle" />
+          </button>
+        )}
       </div>
     </div>,
     document.body,

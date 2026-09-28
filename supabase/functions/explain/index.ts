@@ -2,6 +2,7 @@
 // sentence, written by Claude through the Anthropic Messages API.
 // Input:  { text, translation, source_lang, target_lang }
 // Output: { kind, grammar, examples: [{ target, pt }], context }
+// GET returns { available } (false while ANTHROPIC_API_KEY is not set).
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
@@ -70,13 +71,16 @@ Deno.serve(
   createHandler(
     {
       name: "explain",
-      methods: ["POST"],
+      methods: ["GET", "POST"],
       limits: [
         { requests: 15, windowMs: 60_000 },
         { requests: 200, windowMs: 60 * 60_000 },
       ],
     },
     async ({ body, req }) => {
+      // GET tells the app whether this feature is configured, without calling Claude.
+      if (req.method === "GET") return { available: Boolean(Deno.env.get("ANTHROPIC_API_KEY")) };
+
       const prompt = buildPrompt(parseInput(body));
 
       // Structured outputs make malformed JSON rare; retry once if it happens anyway.

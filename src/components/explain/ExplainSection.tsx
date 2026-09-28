@@ -1,6 +1,7 @@
 import { ArrowRight, BookmarkPlus, BookOpen, Check } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useExplain } from '../../hooks/useExplain'
+import { useExplainAvailable } from '../../hooks/useExplainAvailable'
 import { useTranslator } from '../../hooks/useTranslator'
 import { findEntry, toggleExample, useVocabulary, type Example } from '../../hooks/useVocabulary'
 import { announce } from '../../lib/announce'
@@ -18,14 +19,16 @@ const AUTO_DELAY_MS = 700
 
 export function ExplainSection() {
   const { result: latest, error, wordFocus } = useTranslator()
-  const result = error ? null : latest
+  // Without ANTHROPIC_API_KEY on the server the section stays hidden: plain translator mode.
+  const available = useExplainAvailable()
+  const result = error || !available ? null : latest
   const [manualKey, setManualKey] = useState<string | null>(null)
   const sectionRef = useRef<HTMLElement>(null)
 
   const mainRequest = result ? explainRequestFor(result) : null
   const short = result ? isShortText(result.text) : false
   const requested = result !== null && manualKey === result.key
-  const request = wordFocus ?? (mainRequest && (short || requested) ? mainRequest : null)
+  const request = !available ? null : (wordFocus ?? (mainRequest && (short || requested) ? mainRequest : null))
   const explain = useExplain(request, wordFocus || !short ? 0 : AUTO_DELAY_MS)
 
   useEffect(() => {

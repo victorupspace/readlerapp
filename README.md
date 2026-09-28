@@ -60,7 +60,7 @@ supabase secrets set \
 | Secret | What it is |
 | --- | --- |
 | `DEEPL_API_KEY` | DeepL API key, from [deepl.com/your-account/keys](https://www.deepl.com/your-account/keys). Free keys end in `:fx` and use `api-free.deepl.com`; a Pro key is detected and sent to `api.deepl.com`. |
-| `ANTHROPIC_API_KEY` | Anthropic API key, from [console.anthropic.com](https://console.anthropic.com). Set a monthly spend limit in the console as well. |
+| `ANTHROPIC_API_KEY` | Optional. Anthropic API key, from [console.anthropic.com](https://console.anthropic.com), for **Exemplo e contexto**. Without it, Readler works as a plain DeepL translator and hides that section. The API is billed per use, separately from a Claude.ai subscription, so set a monthly spend limit in the console. |
 | `ALLOWED_ORIGIN` | Origin of your deployed frontend: scheme and host, no path, no trailing slash (for example `https://readler.vercel.app`). Separate several with commas. `http://localhost` and `127.0.0.1` on any port are always allowed. |
 
 ## 3. Deploy the Edge Functions
@@ -88,6 +88,7 @@ Function contracts:
 | `translate` (POST) | `{ text, source_lang, target_lang, formality }`. `source_lang` is `null` to detect; `formality` is `prefer_more` or `prefer_less` and applies to FR and DE | `{ translation, detected_source_lang }` |
 | `usage` (GET) | none | `{ character_count, character_limit }` |
 | `explain` (POST) | `{ text, translation, source_lang, target_lang }` | `{ kind, grammar, examples: [{ target, pt }], context }` |
+| `explain` (GET) | none | `{ available }`, false while `ANTHROPIC_API_KEY` is not set |
 
 Errors always come back as `{ error: { code, message } }`, with `message` in Portuguese and ready to show.
 
@@ -170,10 +171,11 @@ With no login, the functions protect the quotas themselves:
 
   The values are constants at the top of each function and in `_shared/http.ts`. The counters live in memory, one set per function instance, so they are a best-effort brake, not a global quota.
 
-These measures stop casual abuse, not a determined attacker: outside a browser, the `Origin` header can be forged. As a backstop, the DeepL Free plan stops at 500,000 characters a month instead of charging overage, and the Anthropic console lets you set a hard spend limit.
+These measures stop casual abuse, not a determined attacker: outside a browser, the `Origin` header can be forged. As a backstop, the DeepL Free plan stops at its monthly character limit (shown in the footer) instead of charging overage, and the Anthropic console lets you set a hard spend limit.
 
 ## How it behaves
 
+- **DeepL only:** without `ANTHROPIC_API_KEY`, the app asks the `explain` function once per session whether it is configured and hides **Exemplo e contexto** and the popover's link. Set the secret later and they come back after a reload, no code change needed.
 - **Exemplo e contexto** appears on its own for short texts (up to about 80 characters or 10 words), after a short pause so words typed in passing aren't looked up. Longer texts show a **Gerar exemplo e contexto** button instead. Results are cached in `readler:explain-cache` by text, language pair and translation, so the same lookup is never paid for twice.
 - The examples are always in the language you are studying, which is the side of the pair that isn't Portuguese. Translating FR → PT still gives French examples with Portuguese underneath.
 - **Tapping a word** shows its translation into Portuguese. When the translation is itself in Portuguese, it shows the word in the source language instead.
