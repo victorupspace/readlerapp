@@ -6,6 +6,8 @@ export const STORAGE_KEYS = {
   explainCache: 'readler:explain-cache',
   languages: 'readler:languages',
   formality: 'readler:formality',
+  translateCache: 'readler:translate-cache',
+  explainAvailable: 'readler:explain-available',
 } as const
 
 export function readJSON<T>(key: string, fallback: T, isValid?: (value: unknown) => value is T): T {

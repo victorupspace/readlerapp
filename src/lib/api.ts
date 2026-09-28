@@ -28,12 +28,26 @@ export interface ExplainRequest {
   target_lang: TargetLang
 }
 
+export interface ExamplesRequest {
+  /** A single word in the language being studied. */
+  word: string
+  /** Its language code, e.g. "FR", "DE", "EN-GB". */
+  lang: string
+}
+
+export interface ExamplesResponse {
+  examples: { target: string; pt: string }[]
+  source: 'tatoeba'
+}
+
 export interface Explanation {
   kind: 'word' | 'phrase' | 'sentence'
   grammar: string[] | null
   examples: { target: string; pt: string }[]
   context: string | null
 }
+
+type FunctionName = 'translate' | 'usage' | 'explain' | 'examples'
 
 export class ApiError extends Error {
   readonly code: string
@@ -50,7 +64,11 @@ export class ApiError extends Error {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.replace(/\/+$/, '')
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-type FunctionName = 'translate' | 'usage' | 'explain'
+// DeepL and Tatoeba answer from Europe, so running these two functions in
+// Frankfurt is about half a second faster per call than the region nearest
+// the browser. Override with VITE_FUNCTIONS_REGION if that ever changes.
+const FUNCTIONS_REGION = import.meta.env.VITE_FUNCTIONS_REGION ?? 'eu-central-1'
+const PINNED: readonly FunctionName[] = ['translate', 'examples']
 
 async function call<T>(name: FunctionName, body?: unknown, signal?: AbortSignal): Promise<T> {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -68,6 +86,7 @@ async function call<T>(name: FunctionName, body?: unknown, signal?: AbortSignal)
       headers: {
         apikey: SUPABASE_KEY,
         Authorization: `Bearer ${SUPABASE_KEY}`,
+        ...(PINNED.includes(name) ? { 'x-region': FUNCTIONS_REGION } : {}),
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -100,6 +119,20 @@ function fallbackMessage(status: number): string {
   return 'Algo deu errado. Tente novamente.'
 }
 
+/**
+ * Wakes the translate and examples functions so the first real call skips
+ * their cold start. Fire and forget.
+ */
+export function warmUp(): void {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return
+  for (const name of PINNED) {
+    fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'x-region': FUNCTIONS_REGION },
+      priority: 'low',
+    }).catch(() => {})
+  }
+}
+
 export function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError'
 }
@@ -115,4 +148,5 @@ export const api = {
   usage: (signal?: AbortSignal) => call<UsageResponse>('usage', undefined, signal),
   explain: (request: ExplainRequest, signal?: AbortSignal) => call<Explanation>('explain', request, signal),
   explainStatus: (signal?: AbortSignal) => call<{ available: boolean }>('explain', undefined, signal),
+  examples: (request: ExamplesRequest, signal?: AbortSignal) => call<ExamplesResponse>('examples', request, signal),
 }

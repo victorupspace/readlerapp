@@ -8,7 +8,7 @@ interface SwapButtonProps {
   className?: string
 }
 
-/** Round button on the divider; the arrows turn half a turn per click (vertical on phones). */
+/** Small round button on the rule between the pages; the arrows turn half a turn per click. */
 export function SwapButton({ onSwap, disabled, className }: SwapButtonProps) {
   const [turns, setTurns] = useState(0)
   return (
@@ -22,13 +22,13 @@ export function SwapButton({ onSwap, disabled, className }: SwapButtonProps) {
         onSwap()
       }}
       className={cx(
-        'absolute z-10 inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface text-muted shadow-[0_1px_3px_rgb(0_0_0/0.06)]',
-        'transition-colors duration-150 hover:border-line-strong hover:text-ink disabled:text-subtle/50 disabled:hover:border-line',
+        'hit-area absolute z-10 inline-flex size-9 items-center justify-center rounded-full border border-line bg-surface text-muted',
+        'transition-[color,border-color,transform] duration-150 hover:border-line-strong hover:text-ink active:scale-95 disabled:text-subtle/50 disabled:hover:border-line',
         className,
       )}
     >
       <ArrowLeftRight
-        size={18}
+        size={15}
         strokeWidth={1.75}
         aria-hidden
         style={{ '--turns': turns } as CSSProperties}

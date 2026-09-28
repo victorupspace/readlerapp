@@ -1,6 +1,8 @@
-import '@fontsource-variable/inter/opsz.css'
-import '@fontsource-variable/newsreader/opsz.css'
-import '@fontsource-variable/newsreader/opsz-italic.css'
+import '@fontsource/ubuntu/400.css'
+import '@fontsource/ubuntu/500.css'
+import '@fontsource/barlow/400.css'
+import '@fontsource/barlow/500.css'
+import '@fontsource/barlow/600.css'
 import './index.css'
 
 import { StrictMode } from 'react'

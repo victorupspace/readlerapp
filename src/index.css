@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Newsreader, subset to the letters of the wordmark only (6 KB). */
+@font-face {
+  font-family: "Newsreader Wordmark";
+  src: url("./assets/newsreader-wordmark.woff2") format("woff2-variations");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------- Theme tokens ----------
@@ -17,6 +26,7 @@
   --subtle: #6f6a62;
   --line: #e6e2d9;
   --line-strong: #d2ccc0;
+  --line-focus: color-mix(in oklab, #3a4093 42%, #e6e2d9);
   --accent: #3a4093;
   --accent-strong: #2e3378;
   --on-accent: #ffffff;
@@ -37,6 +47,7 @@
   --subtle: #949088;
   --line: #2a2c33;
   --line-strong: #3b3e47;
+  --line-focus: color-mix(in oklab, #a9b1f6 38%, #2a2c33);
   --accent: #a9b1f6;
   --accent-strong: #c3c9fa;
   --on-accent: #111216;
@@ -47,12 +58,15 @@
 }
 
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: "Newsreader Variable", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: "Ubuntu", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Barlow", "Ubuntu", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Newsreader Wordmark", ui-serif, Georgia, "Times New Roman", serif;
 
   --ease-calm: cubic-bezier(0.2, 0, 0, 1);
 
   --animate-fade-in: fade-in 200ms var(--ease-calm) both;
+  --animate-fade: fade 180ms var(--ease-calm) both;
+  --animate-swap-in: swap-in 200ms var(--ease-calm) both;
   --animate-pop-in: pop-in 150ms var(--ease-calm) both;
   --animate-pulse-soft: pulse-soft 1.6s ease-in-out infinite;
 
@@ -60,6 +74,26 @@
     from {
       opacity: 0;
       transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes swap-in {
+    from {
+      opacity: 0;
+      transform: rotate(-40deg) scale(0.8);
     }
     to {
       opacity: 1;
@@ -100,6 +134,7 @@
   --color-subtle: var(--subtle);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-line-focus: var(--line-focus);
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-on-accent: var(--on-accent);
@@ -138,6 +173,11 @@
     background-color: color-mix(in oklab, var(--accent) 24%, transparent);
   }
 
+  textarea,
+  input {
+    caret-color: var(--accent);
+  }
+
   button:not(:disabled),
   [role="button"],
   [role="option"],
@@ -156,6 +196,25 @@
     position: absolute;
     inset: -6px;
   }
+}
+
+/* Small-caps style labels (uppercase, letter-spaced): running heads, actions, section labels. */
+@utility label-caps {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility label-caps-lg {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Thin indeterminate progress line (top of the translation panel). */

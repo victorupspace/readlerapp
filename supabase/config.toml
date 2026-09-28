@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.explain]
 verify_jwt = false
+
+[functions.examples]
+verify_jwt = false

@@ -7,12 +7,12 @@ import type { ExplainRequest } from '../../lib/api'
 import { bcp47, isPortuguese, supportsFormality, TARGET_LANGUAGES, toTargetLang } from '../../lib/languages'
 import { cx } from '../../lib/misc'
 import { resolvedSource, studyDraft } from '../../lib/study'
+import { ActionLink } from '../ActionLink'
 import { FormalityToggle } from '../FormalityToggle'
-import { IconButton } from '../IconButton'
 import { InlineError } from '../InlineError'
 import { LanguageSelect } from '../LanguageSelect'
 import { SpeakButton } from '../SpeakButton'
-import { PanelHeader, panelBodyClass, panelTextClass, PanelToolbar } from './Panel'
+import { PageFoot, pageBodyClass, pageTextClass, RunningHead } from './Panel'
 import { ProgressLine } from './ProgressLine'
 import { SwapButton } from './SwapButton'
 import { TappableText } from './TappableText'
@@ -82,15 +82,15 @@ export function TargetPanel() {
   }
 
   return (
-    <div className="relative flex min-w-0 flex-col rounded-b-[19px] border-t border-line bg-tint md:rounded-bl-none md:rounded-r-[19px] md:border-l md:border-t-0">
+    <div className="relative flex min-w-0 flex-col border-t border-line bg-tint md:border-l md:border-t-0">
       <ProgressLine active={loading} />
       <SwapButton
         onSwap={translator.swap}
         disabled={!translator.canSwap}
-        className="left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 md:left-0 md:top-8"
+        className="left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 md:left-0 md:top-6"
       />
 
-      <PanelHeader className="pt-2 md:pl-12 md:pt-0">
+      <RunningHead className="md:pl-10">
         <LanguageSelect
           id="target-lang"
           label="Idioma de destino"
@@ -101,27 +101,40 @@ export function TargetPanel() {
         />
         {supportsFormality(targetLang) && (
           <FormalityToggle
-            className="ml-auto"
+            className="-mr-1.5 ml-auto"
             value={translator.formality}
             onChange={translator.setFormality}
             targetLang={targetLang}
           />
         )}
-      </PanelHeader>
+      </RunningHead>
 
-      <div className={cx(panelBodyClass, panelTextClass)}>
+      <div
+        className={cx(
+          pageBodyClass,
+          pageTextClass,
+          'transition-opacity duration-200',
+          loading && result && 'opacity-50',
+        )}
+      >
         {error ? (
           <InlineError message={error} onRetry={translator.translateNow} />
         ) : result ? (
           canLookUp ? (
             <TappableText
+              key={result.key}
               text={result.translation}
               lang={bcp47(result.targetLang)}
               selectedIndex={shownWord?.index ?? null}
               onWord={(word, index, anchor) => setOpenWord({ resultKey: result.key, index, word, anchor })}
+              className="animate-fade text-pretty"
             />
           ) : (
-            <p lang={bcp47(result.targetLang)} className="whitespace-pre-wrap break-words">
+            <p
+              key={result.key}
+              lang={bcp47(result.targetLang)}
+              className="animate-fade whitespace-pre-wrap text-pretty break-words"
+            >
               {result.translation}
             </p>
           )
@@ -132,34 +145,45 @@ export function TargetPanel() {
         )}
       </div>
 
-      <PanelToolbar>
+      <PageFoot>
         <SpeakButton
+          variant="text"
           id="target"
           text={result?.translation ?? ''}
           lang={result?.targetLang ?? targetLang}
           label="Ouvir tradução"
         />
         <SpeakButton
+          variant="text"
           id="target-slow"
           text={result?.translation ?? ''}
           lang={result?.targetLang ?? targetLang}
           label="Ouvir devagar"
           slow
         />
-        <div className="ml-auto flex items-center gap-0.5">
-          <IconButton label={copied ? 'Copiado' : 'Copiar tradução'} disabled={!result} onClick={copy} active={copied}>
-            {copied ? <Check size={19} aria-hidden /> : <Copy size={18} strokeWidth={1.75} aria-hidden />}
-          </IconButton>
-          <IconButton
-            label={saved ? 'Remover do vocabulário' : 'Salvar no vocabulário'}
-            disabled={!draft}
-            onClick={toggleSave}
-            active={saved}
+        <div className="ml-auto flex items-center gap-1">
+          <ActionLink
+            aria-label={copied ? 'Copiado' : 'Copiar tradução'}
+            title={copied ? 'Copiado' : 'Copiar tradução'}
+            icon={copied ? <Check size={14} strokeWidth={2} aria-hidden /> : <Copy size={14} strokeWidth={1.75} aria-hidden />}
+            disabled={!result}
+            active={copied}
+            onClick={copy}
           >
-            <Bookmark size={19} strokeWidth={1.75} aria-hidden className={cx(saved && 'fill-current')} />
-          </IconButton>
+            {copied ? 'Copiado' : 'Copiar'}
+          </ActionLink>
+          <ActionLink
+            aria-label={saved ? 'Remover do vocabulário' : 'Salvar no vocabulário'}
+            title={saved ? 'Remover do vocabulário' : 'Salvar no vocabulário'}
+            icon={<Bookmark size={14} strokeWidth={1.75} aria-hidden className={cx(saved && 'fill-current')} />}
+            disabled={!draft}
+            active={saved}
+            onClick={toggleSave}
+          >
+            {saved ? 'Salvo' : 'Salvar'}
+          </ActionLink>
         </div>
-      </PanelToolbar>
+      </PageFoot>
 
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {result ? `Tradução: ${result.translation}` : ''}

@@ -1,16 +1,36 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, errorMessage, isAbortError } from '../lib/api'
-import { supportsFormality, toSourceLang, type TargetLang } from '../lib/languages'
+import { isPortuguese, isStudyLang, supportsFormality, toSourceLang, type SourceLang, type TargetLang } from '../lib/languages'
+import { STORAGE_KEYS, readJSON, writeJSON } from '../lib/storage'
 import type { TranslationInput, TranslationResult } from '../types'
-import { scheduleUsageRefresh } from './useUsage'
 
+// Long texts wait 600 ms after the last keystroke; a short text, or one that
+// just ended in a full stop, waits less. Pasting translates at once.
 const DEBOUNCE_MS = 600
-const CACHE_LIMIT = 200
+const SHORT_DEBOUNCE_MS = 300
+const SHORT_TEXT = 24
+const CACHE_LIMIT = 300
 
-// Recent results stay in memory: backspacing to an earlier text, flipping
-// formality back or reopening from history costs no DeepL characters.
-const cache = new Map<string, TranslationResult>()
+// Recent results are kept in memory and in localStorage: backspacing to an
+// earlier text, flipping formality back, reopening from history or typing the
+// same word next week costs no DeepL characters and shows instantly.
+const isStoredResults = (value: unknown): value is TranslationResult[] =>
+  Array.isArray(value) && value.every((item) => typeof item?.key === 'string' && typeof item?.translation === 'string')
+
+const cache = new Map<string, TranslationResult>(
+  readJSON<TranslationResult[]>(STORAGE_KEYS.translateCache, [], isStoredResults).map((item) => [item.key, item]),
+)
 const wordCache = new Map<string, string>()
+
+// The study language used most recently, the best guess for a lone word that
+// DeepL could not place among Readler's four languages.
+let lastStudyLang: Exclude<SourceLang, 'auto' | 'PT'> | null = null
+
+let persistTimer: ReturnType<typeof setTimeout> | undefined
+function persist() {
+  clearTimeout(persistTimer)
+  persistTimer = setTimeout(() => writeJSON(STORAGE_KEYS.translateCache, [...cache.values()]), 500)
+}
 
 export function translationKey(input: TranslationInput): string {
   const formality = supportsFormality(input.targetLang) ? input.formality : ''
@@ -21,6 +41,9 @@ export function rememberTranslation(result: TranslationResult): void {
   cache.delete(result.key)
   cache.set(result.key, result)
   if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value as string)
+  persist()
+  const source = result.sourceLang === 'auto' ? result.detectedLang : result.sourceLang
+  if (isStudyLang(source)) lastStudyLang = toSourceLang(source) as typeof lastStudyLang
 }
 
 interface Options {
@@ -29,8 +52,9 @@ interface Options {
 }
 
 /**
- * Translates as you type: 600 ms after the last keystroke, right away when a
- * language or the formality changes, or on demand with `flush` (Ctrl/Cmd+Enter).
+ * Translates as you type: after a pause (600 ms, or 300 ms for short texts and
+ * finished sentences), right away when a language or the formality changes,
+ * and on demand with `flush` (Ctrl/Cmd+Enter, paste).
  * Stale responses are dropped, and in-flight requests are aborted when superseded.
  */
 export function useTranslation(input: TranslationInput, { onResult }: Options = {}) {
@@ -95,25 +119,22 @@ export function useTranslation(input: TranslationInput, { onResult }: Options = 
       abortRef.current = controller
       setPendingKey(key)
       try {
-        const response = await api.translate(
-          {
-            text,
-            source_lang: sourceLang === 'auto' ? null : sourceLang,
-            target_lang: targetLang,
-            formality: supportsFormality(targetLang) ? formality : undefined,
-          },
-          controller.signal,
-        )
-        scheduleUsageRefresh()
-        show({
-          key,
+        const request = {
           text,
-          sourceLang,
-          targetLang,
-          formality,
-          translation: response.translation,
-          detectedLang: response.detected_source_lang,
-        })
+          source_lang: sourceLang === 'auto' ? null : sourceLang,
+          target_lang: targetLang,
+          formality: supportsFormality(targetLang) ? formality : undefined,
+        }
+        let response = await api.translate(request, controller.signal)
+        let detectedLang = response.detected_source_lang
+        // A lone word is easy to misdetect ("jardin" comes back as Spanish).
+        // Readler only deals in four languages, so retry with the likeliest.
+        if (sourceLang === 'auto' && !toSourceLang(detectedLang) && text.length <= SHORT_TEXT) {
+          const guess = isPortuguese(targetLang) ? (lastStudyLang ?? 'EN') : 'PT'
+          response = await api.translate({ ...request, source_lang: guess }, controller.signal)
+          detectedLang = guess
+        }
+        show({ key, text, sourceLang, targetLang, formality, translation: response.translation, detectedLang })
       } catch (error) {
         if (!isAbortError(error) && latestKeyRef.current === key) {
           setFailure({ key, message: errorMessage(error) })
@@ -121,7 +142,7 @@ export function useTranslation(input: TranslationInput, { onResult }: Options = 
       } finally {
         setPendingKey((current) => (current === key ? null : current))
       }
-    }, immediate ? 0 : DEBOUNCE_MS)
+    }, immediate ? 0 : text.length <= SHORT_TEXT || /[.!?…]$/u.test(text) ? SHORT_DEBOUNCE_MS : DEBOUNCE_MS)
 
     return () => clearTimeout(timer)
   }, [key, flushCount, text, sourceLang, targetLang, formality])
@@ -157,7 +178,6 @@ export function useWordTranslation(word: string | null, from: TargetLang, to: Ta
       .translate({ text: word, source_lang: toSourceLang(from), target_lang: to }, controller.signal)
       .then((response) => {
         wordCache.set(key, response.translation)
-        scheduleUsageRefresh()
         setState({ key, translation: response.translation })
       })
       .catch((error: unknown) => {

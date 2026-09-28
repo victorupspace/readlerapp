@@ -45,6 +45,12 @@ export function isPortuguese(code: string): boolean {
   return baseLang(code) === 'PT'
 }
 
+/** French, German or English: the languages being studied. */
+export function isStudyLang(code: string): boolean {
+  const base = baseLang(code)
+  return base === 'FR' || base === 'DE' || base === 'EN'
+}
+
 /** Formal / informal is offered for French (tu/vous) and German (du/Sie). */
 export function supportsFormality(target: TargetLang): boolean {
   return target === 'FR' || target === 'DE'

@@ -18,7 +18,7 @@ export function TopBar({ route }: { route: Route }) {
                 href={ROUTE_HREFS[itemRoute]}
                 aria-current={current ? 'page' : undefined}
                 className={cx(
-                  'relative inline-flex items-center text-[15px] font-medium transition-colors duration-150',
+                  'label-caps-lg relative inline-flex items-center transition-colors duration-150',
                   current ? 'text-ink' : 'text-muted hover:text-ink',
                 )}
               >

@@ -2,15 +2,15 @@
 
 *Leia, traduza, aprenda.*
 
-A personal translator for studying French, German and English from Brazilian Portuguese. It translates with DeepL and, under every short translation, shows **Exemplo e contexto**: two natural example sentences, grammar notes when they matter (gender, plural, separable or irregular verbs), and a short context note written by Claude. Tap any word in a translation to see it on its own and save it to your vocabulary. Export the vocabulary to Anki.
+A personal translator for studying French, German and English from Brazilian Portuguese. It translates with DeepL and, under every short translation, shows a **Verbete** (dictionary entry): two natural example sentences, grammar notes when they matter (gender, plural, separable or irregular verbs), and a short context note written by Claude. Tap any word in a translation to see it on its own and save it to your vocabulary. Export the vocabulary to Anki.
 
 Single user by design: no accounts and no database. History and vocabulary live in your browser (localStorage). The DeepL and Anthropic keys stay on the server, inside Supabase Edge Functions.
 
 ## Stack
 
 - React 19, Vite 8, TypeScript, Tailwind CSS 4 (theme tokens as CSS variables), lucide-react icons
-- Inter and Newsreader, bundled with the app (no external font requests, works offline)
-- Supabase Edge Functions (Deno) as thin proxies: `translate` and `usage` (DeepL API), `explain` (Anthropic Messages API, `claude-haiku-4-5-20251001`)
+- Ubuntu (text) and Barlow (headings and labels), bundled with the app; Newsreader only for the wordmark, as a 6 KB subset (no external font requests, works offline)
+- Supabase Edge Functions (Deno) as thin proxies: `translate` and `usage` (DeepL API), `explain` (Anthropic Messages API, `claude-haiku-4-5-20251001`), `examples` (Tatoeba)
 - Installable PWA: `public/manifest.webmanifest` and a small service worker (`public/sw.js`)
 
 ## Project structure
@@ -21,7 +21,7 @@ public/                     manifest, service worker, favicon and app icons
 src/
   components/               UI: top bar, language dropdown, segmented controls, buttons…
     translator/             translator card: panels, swap button, tappable words, word popover
-    explain/                "Exemplo e contexto"
+    explain/                "Verbete": the dictionary entry under the translation
   hooks/                    useTranslation, useExplain, useSpeech, useTheme, useLocalStorage,
                             useHistory, useVocabulary, useUsage, useHashRoute, useTranslator
   lib/                      typed API client, languages, caches, CSV export, formatting
@@ -60,7 +60,7 @@ supabase secrets set \
 | Secret | What it is |
 | --- | --- |
 | `DEEPL_API_KEY` | DeepL API key, from [deepl.com/your-account/keys](https://www.deepl.com/your-account/keys). Free keys end in `:fx` and use `api-free.deepl.com`; a Pro key is detected and sent to `api.deepl.com`. |
-| `ANTHROPIC_API_KEY` | Optional. Anthropic API key, from [console.anthropic.com](https://console.anthropic.com), for **Exemplo e contexto**. Without it, Readler works as a plain DeepL translator and hides that section. The API is billed per use, separately from a Claude.ai subscription, so set a monthly spend limit in the console. |
+| `ANTHROPIC_API_KEY` | Optional. Anthropic API key, from [console.anthropic.com](https://console.anthropic.com), for the **Verbete** section. Without it, Readler works as a plain DeepL translator and hides that section. The API is billed per use, separately from a Claude.ai subscription, so set a monthly spend limit in the console. |
 | `ALLOWED_ORIGIN` | Origin of your deployed frontend: scheme and host, no path, no trailing slash (for example `https://readler.vercel.app`). Separate several with commas. `http://localhost` and `127.0.0.1` on any port are always allowed. |
 
 ## 3. Deploy the Edge Functions
@@ -69,9 +69,10 @@ supabase secrets set \
 supabase functions deploy translate
 supabase functions deploy usage
 supabase functions deploy explain
+supabase functions deploy examples
 ```
 
-`supabase/config.toml` turns off Supabase's JWT check for these three functions. They have no user to authenticate, they do their own gatekeeping (see [Protections](#protections-and-limits)), and it keeps them working with the newer `sb_publishable_…` keys, which are not JWTs. If you deploy without the config file, add `--no-verify-jwt`.
+`supabase/config.toml` turns off Supabase's JWT check for these functions. They have no user to authenticate, they do their own gatekeeping (see [Protections](#protections-and-limits)), and it keeps them working with the newer `sb_publishable_…` keys, which are not JWTs. If you deploy without the config file, add `--no-verify-jwt`.
 
 Quick test (the function only answers allowed origins, so send one):
 
@@ -89,6 +90,7 @@ Function contracts:
 | `usage` (GET) | none | `{ character_count, character_limit }` |
 | `explain` (POST) | `{ text, translation, source_lang, target_lang }` | `{ kind, grammar, examples: [{ target, pt }], context }` |
 | `explain` (GET) | none | `{ available }`, false while `ANTHROPIC_API_KEY` is not set |
+| `examples` (POST) | `{ word, lang }` | `{ examples: [{ target, pt }], source: "tatoeba" }`, up to two short sentences |
 
 Errors always come back as `{ error: { code, message } }`, with `message` in Portuguese and ready to show.
 
@@ -168,20 +170,23 @@ With no login, the functions protect the quotas themselves:
   - `translate`: 60 requests per minute and 60,000 characters per hour.
   - `explain`: 15 requests per minute and 200 per hour.
   - `usage`: 30 requests per minute.
+  - `examples`: 30 requests per minute.
 
   The values are constants at the top of each function and in `_shared/http.ts`. The counters live in memory, one set per function instance, so they are a best-effort brake, not a global quota.
 
-These measures stop casual abuse, not a determined attacker: outside a browser, the `Origin` header can be forged. As a backstop, the DeepL Free plan stops at its monthly character limit (shown in the footer) instead of charging overage, and the Anthropic console lets you set a hard spend limit.
+These measures stop casual abuse, not a determined attacker: outside a browser, the `Origin` header can be forged. As a backstop, the DeepL Free plan stops at its monthly character limit instead of charging overage (check it any time with the `usage` function), and the Anthropic console lets you set a hard spend limit.
 
 ## How it behaves
 
-- **DeepL only:** without `ANTHROPIC_API_KEY`, the app asks the `explain` function once per session whether it is configured and hides **Exemplo e contexto** and the popover's link. Set the secret later and they come back after a reload, no code change needed.
-- **Exemplo e contexto** appears on its own for short texts (up to about 80 characters or 10 words), after a short pause so words typed in passing aren't looked up. Longer texts show a **Gerar exemplo e contexto** button instead. Results are cached in `readler:explain-cache` by text, language pair and translation, so the same lookup is never paid for twice.
+- **DeepL only:** without `ANTHROPIC_API_KEY`, the app asks the `explain` function once per session whether it is configured and hides the **Verbete** section and the popover's link. Set the secret later and they come back after a reload, no code change needed.
+- **Single words without the Verbete:** when you translate one word (an article is fine: "a ponte", "die Brücke"), the app shows up to two short example sentences with Portuguese translations under the translation, fetched from [Tatoeba](https://tatoeba.org) (community sentences, CC BY 2.0 FR) through the `examples` function. No key needed; coverage depends on the word. With the Verbete configured, Claude's examples take its place.
+- The **Verbete** appears on its own for short texts (up to about 80 characters or 10 words), after a short pause so words typed in passing aren't looked up. Longer texts show a **Gerar verbete** button instead. Results are cached in `readler:explain-cache` by text, language pair and translation, so the same lookup is never paid for twice.
 - The examples are always in the language you are studying, which is the side of the pair that isn't Portuguese. Translating FR → PT still gives French examples with Portuguese underneath.
 - **Tapping a word** shows its translation into Portuguese. When the translation is itself in Portuguese, it shows the word in the source language instead.
 - If the detected language is already the target language, Readler switches the target automatically, as DeepL does (French text with target French switches to Portuguese). A target you pick by hand is kept until you edit the text.
 - **History** keeps one entry per piece of text you work on, not one per keystroke, and keeps the last 100 (favorites are dropped last). Reopening an entry reuses the stored translation and costs no DeepL characters.
 - **Listen** uses the browser's speech synthesis with an fr-FR, de-DE, en-US/en-GB or pt-BR voice, plus a slower option on the translation. Voice quality depends on the voices installed on your device.
+- **Speed:** short texts and finished sentences translate 300 ms after you stop typing (600 ms for longer texts), pasting translates at once, and repeated texts come from a local cache (`readler:translate-cache`) without touching DeepL. The `translate` and `examples` functions are pinned to `eu-central-1`, next to DeepL and Tatoeba, which is about half a second faster per call from Brazil than the default region; the app also pings them on load so the first call is warm. Example lookups start as soon as the translation arrives, or in parallel with it when the typed word is already in French, German or English.
 - **Shortcut:** Ctrl/Cmd + Enter translates immediately.
 
 ## Your data

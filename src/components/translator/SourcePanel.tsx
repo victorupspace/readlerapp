@@ -3,10 +3,10 @@ import { useLayoutEffect, useRef, type KeyboardEvent } from 'react'
 import { useTranslator } from '../../hooks/useTranslator'
 import { bcp47, languageName, SOURCE_LANGUAGES } from '../../lib/languages'
 import { cx } from '../../lib/misc'
-import { IconButton } from '../IconButton'
+import { ActionLink } from '../ActionLink'
 import { LanguageSelect } from '../LanguageSelect'
 import { SpeakButton } from '../SpeakButton'
-import { PanelHeader, panelBodyClass, panelTextClass, PanelToolbar } from './Panel'
+import { PageFoot, pageBodyClass, pageTextClass, RunningHead } from './Panel'
 
 export const MAX_CHARS = 5000
 
@@ -18,7 +18,7 @@ export function SourcePanel() {
   const detected = sourceLang === 'auto' && result ? result.detectedLang : null
   const spokenLang = sourceLang === 'auto' ? detected : sourceLang
 
-  // Grow with the content instead of scrolling inside the panel.
+  // Grow with the content instead of scrolling inside the page.
   useLayoutEffect(() => {
     const textarea = textareaRef.current
     if (!textarea) return
@@ -40,7 +40,7 @@ export function SourcePanel() {
 
   return (
     <div className="flex min-w-0 flex-col">
-      <PanelHeader>
+      <RunningHead>
         <LanguageSelect
           id="source-lang"
           label="Idioma de origem"
@@ -51,15 +51,15 @@ export function SourcePanel() {
           display={
             detected ? (
               <>
-                {languageName(detected)} <span className="font-normal text-subtle">(detectado)</span>
+                {languageName(detected)} <span className="text-subtle">· detectado</span>
               </>
             ) : undefined
           }
         />
-      </PanelHeader>
+      </RunningHead>
 
       <div
-        className={cx(panelBodyClass, 'cursor-text')}
+        className={cx(pageBodyClass, 'cursor-text')}
         onMouseDown={(event) => {
           // Clicking the empty area under the text still places the cursor.
           if (event.target === event.currentTarget) {
@@ -77,6 +77,7 @@ export function SourcePanel() {
           value={sourceText}
           onChange={(event) => translator.setSourceText(event.target.value)}
           onKeyDown={onKeyDown}
+          onPaste={() => setTimeout(translator.translateNow, 0)}
           maxLength={MAX_CHARS}
           rows={1}
           placeholder="Escreva ou cole o texto aqui."
@@ -86,20 +87,22 @@ export function SourcePanel() {
           aria-describedby="source-count"
           aria-keyshortcuts="Control+Enter Meta+Enter"
           className={cx(
-            panelTextClass,
-            'block min-h-[164px] w-full resize-none overflow-hidden bg-transparent outline-none placeholder:text-subtle md:min-h-[256px]',
+            pageTextClass,
+            'block min-h-[152px] w-full resize-none overflow-hidden bg-transparent text-pretty outline-none placeholder:text-subtle md:min-h-[240px]',
           )}
         />
       </div>
 
-      <PanelToolbar>
-        <SpeakButton id="source" text={sourceText} lang={spokenLang ?? ''} label="Ouvir texto original" />
-        <div className="ml-auto flex items-center gap-1">
-          <span id="source-count" className="px-2 text-[13px] tabular-nums text-subtle">
+      <PageFoot>
+        <SpeakButton variant="text" id="source" text={sourceText} lang={spokenLang ?? ''} label="Ouvir texto original" />
+        <div className="ml-auto flex items-center gap-2">
+          <span id="source-count" className="text-[12px] tabular-nums text-subtle">
             {sourceText.length} / {MAX_CHARS}
           </span>
-          <IconButton
-            label="Limpar texto"
+          <ActionLink
+            aria-label="Limpar texto"
+            title="Limpar texto"
+            icon={<X size={14} strokeWidth={2} aria-hidden />}
             disabled={!sourceText}
             className={cx(!sourceText && 'invisible')}
             onClick={() => {
@@ -107,10 +110,10 @@ export function SourcePanel() {
               textareaRef.current?.focus()
             }}
           >
-            <X size={20} strokeWidth={1.75} aria-hidden />
-          </IconButton>
+            Limpar
+          </ActionLink>
         </div>
-      </PanelToolbar>
+      </PageFoot>
     </div>
   )
 }

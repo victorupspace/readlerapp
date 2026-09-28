@@ -91,8 +91,8 @@ export function TappableText({ text, lang, selectedIndex, onWord, className }: T
             aria-haspopup="dialog"
             aria-expanded={index === selectedIndex}
             className={cx(
-              '-mx-px rounded-[5px] px-px transition-colors duration-150 hover:bg-accent/10 focus-visible:outline-offset-1',
-              index === selectedIndex && 'bg-accent/15 hover:bg-accent/15',
+              'rounded-[3px] decoration-subtle/70 decoration-dotted underline-offset-[5px] transition-colors duration-150 hover:underline focus-visible:outline-offset-1',
+              index === selectedIndex && 'bg-accent/12',
             )}
           >
             {token.text}

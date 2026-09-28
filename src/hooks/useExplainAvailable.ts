@@ -1,16 +1,22 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import { api } from '../lib/api'
+import { STORAGE_KEYS, readJSON, writeJSON } from '../lib/storage'
 
-// Whether "Exemplo e contexto" is configured on the server (ANTHROPIC_API_KEY set).
-// Asked once per session; until the answer arrives, or if the check fails, the
-// feature is assumed to be available.
+// Whether the Verbete (Claude) is configured on the server (ANTHROPIC_API_KEY
+// set). The last answer is kept in localStorage so the app knows at once on
+// the next visit; it is asked again once per session.
 
-let available: boolean | null = null
+let available: boolean | null = readJSON<boolean | null>(
+  STORAGE_KEYS.explainAvailable,
+  null,
+  (value): value is boolean => typeof value === 'boolean',
+)
 let requested = false
 const listeners = new Set<() => void>()
 
 function update(value: boolean) {
   available = value
+  writeJSON(STORAGE_KEYS.explainAvailable, value)
   listeners.forEach((listener) => listener())
 }
 
@@ -37,7 +43,7 @@ export function useExplainAvailable(): boolean {
 
   return useSyncExternalStore(
     subscribe,
-    () => available !== false,
-    () => true,
+    () => available === true,
+    () => false,
   )
 }

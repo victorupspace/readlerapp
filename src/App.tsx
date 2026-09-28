@@ -6,6 +6,7 @@ import { SkipLink } from './components/SkipLink'
 import { TopBar } from './components/TopBar'
 import { TranslatorProvider } from './components/TranslatorProvider'
 import { useHashRoute, type Route } from './hooks/useHashRoute'
+import { warmUp } from './lib/api'
 import { useTheme } from './hooks/useTheme'
 import { HistoryPage } from './pages/HistoryPage'
 import { TranslatePage } from './pages/TranslatePage'
@@ -22,6 +23,19 @@ export default function App() {
   const route = useHashRoute()
   const mainRef = useRef<HTMLElement>(null)
   const firstRender = useRef(true)
+
+  // Functions idle out after a few minutes; a ping on load and on return keeps them warm.
+  useEffect(() => {
+    let last = 0
+    const ping = () => {
+      if (Date.now() - last < 3 * 60_000) return
+      last = Date.now()
+      warmUp()
+    }
+    ping()
+    window.addEventListener('focus', ping)
+    return () => window.removeEventListener('focus', ping)
+  }, [])
 
   useEffect(() => {
     document.title = TITLES[route]

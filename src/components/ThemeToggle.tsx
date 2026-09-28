@@ -7,7 +7,9 @@ export function ThemeToggle() {
   const dark = theme === 'dark'
   return (
     <IconButton label={dark ? 'Usar tema claro' : 'Usar tema escuro'} onClick={toggle}>
-      {dark ? <Sun size={19} strokeWidth={1.75} aria-hidden /> : <Moon size={19} strokeWidth={1.75} aria-hidden />}
+      <span key={theme} className="inline-flex animate-swap-in">
+        {dark ? <Sun size={19} strokeWidth={1.75} aria-hidden /> : <Moon size={19} strokeWidth={1.75} aria-hidden />}
+      </span>
     </IconButton>
   )
 }

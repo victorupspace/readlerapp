@@ -103,7 +103,7 @@ export function WordPopover({ word, wordLang, lookupLang, anchor, onClose, onExp
   }
 
   const rowClass =
-    'flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[15px] text-ink transition-colors duration-150 hover:bg-ink/[0.05] disabled:pointer-events-none disabled:opacity-40'
+    'label-caps flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-ink transition-colors duration-150 hover:bg-ink/[0.05] disabled:pointer-events-none disabled:opacity-40'
 
   return createPortal(
     <div
@@ -116,15 +116,26 @@ export function WordPopover({ word, wordLang, lookupLang, anchor, onClose, onExp
         if (!event.currentTarget.contains(event.relatedTarget as Node | null) && event.relatedTarget) onClose(false)
       }}
       style={{ top: position?.top ?? 0, left: position?.left ?? 0, visibility: position ? 'visible' : 'hidden' }}
-      className="fixed z-50 w-[min(18.5rem,calc(100vw-24px))] animate-pop-in rounded-2xl border border-line bg-raised p-1.5 shadow-pop outline-none"
+      className="fixed z-50 w-[min(19rem,calc(100vw-24px))] animate-pop-in rounded-lg border border-line bg-raised p-1.5 shadow-pop outline-none"
     >
-      <div className="px-3 pb-3 pt-2">
-        <p id="word-popover-title" lang={bcp47(wordLang)} className="font-serif text-[1.375rem] leading-tight text-ink">
+      <div className="px-3 pb-3 pt-2.5">
+        <p
+          id="word-popover-title"
+          lang={bcp47(wordLang)}
+          className="font-display text-[1.375rem] font-semibold leading-tight text-ink"
+        >
           {word}
         </p>
         <div className="mt-1 min-h-6 text-[15px] leading-6 text-muted" aria-live="polite">
-          {lookup.status === 'success' && <span lang={bcp47(lookupLang)}>{lookup.translation}</span>}
-          {lookup.status === 'error' && <span className="text-danger">{lookup.error}</span>}
+          {lookup.status === 'success' && (
+            <span lang={bcp47(lookupLang)}>
+              <span aria-hidden className="mr-2 text-subtle">
+                —
+              </span>
+              {lookup.translation}
+            </span>
+          )}
+          {lookup.status === 'error' && <span className="text-[14px] text-danger">{lookup.error}</span>}
           {lookup.status === 'loading' && (
             <span className="inline-block h-3 w-28 animate-pulse-soft rounded-full bg-ink/10 align-middle" />
           )}
@@ -133,7 +144,7 @@ export function WordPopover({ word, wordLang, lookupLang, anchor, onClose, onExp
       <div className="border-t border-line pt-1.5">
         <button type="button" className={rowClass} disabled={!draft} onClick={toggleSave}>
           <Bookmark
-            size={18}
+            size={15}
             strokeWidth={1.75}
             aria-hidden
             className={cx(saved ? 'fill-current text-accent' : 'text-muted')}
@@ -142,9 +153,9 @@ export function WordPopover({ word, wordLang, lookupLang, anchor, onClose, onExp
         </button>
         {explainAvailable && (
           <button type="button" className={rowClass} disabled={!translation} onClick={explain}>
-            <BookOpen size={18} strokeWidth={1.75} aria-hidden className="text-muted" />
-            <span className="flex-1">Ver exemplo e contexto</span>
-            <ArrowRight size={16} aria-hidden className="text-subtle" />
+            <BookOpen size={15} strokeWidth={1.75} aria-hidden className="text-muted" />
+            <span className="flex-1">Ver verbete</span>
+            <ArrowRight size={14} aria-hidden className="text-subtle" />
           </button>
         )}
       </div>

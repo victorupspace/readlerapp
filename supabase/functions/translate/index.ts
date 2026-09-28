@@ -1,6 +1,7 @@
 // translate: thin proxy to DeepL /v2/translate.
 // Input:  { text, source_lang, target_lang, formality }
 // Output: { translation, detected_source_lang }
+// GET answers { ok: true }: the app pings it on load so the first translation is warm.
 import { deepl } from "../_shared/deepl.ts";
 import { createHandler, HttpError, rateLimited } from "../_shared/http.ts";
 import { isSourceLang, isTargetLang, type TargetLang } from "../_shared/languages.ts";
@@ -22,8 +23,10 @@ interface DeepLTranslation {
 
 Deno.serve(
   createHandler(
-    { name: "translate", methods: ["POST"], limits: [{ requests: 60, windowMs: 60_000 }] },
-    async ({ body, ip }) => {
+    { name: "translate", methods: ["GET", "POST"], limits: [{ requests: 60, windowMs: 60_000 }] },
+    async ({ req, body, ip }) => {
+      if (req.method === "GET") return { ok: true };
+
       const input = parseInput(body);
 
       const retryAfter = consume(`translate:chars:${ip}`, input.text.length, HOURLY_CHAR_BUDGET, HOUR);
@@ -32,6 +35,8 @@ Deno.serve(
       const data = await deepl<DeepLTranslation>("/v2/translate", {
         text: [input.text],
         target_lang: input.targetLang,
+        // The classic models answer fastest; the next-gen ones add latency.
+        model_type: "latency_optimized",
         ...(input.sourceLang ? { source_lang: input.sourceLang } : {}),
         ...(input.formality ? { formality: input.formality } : {}),
       });
