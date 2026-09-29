@@ -64,6 +64,35 @@ export class ApiError extends Error {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.replace(/\/+$/, '')
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// A swapped or misspelled value is the usual deployment mistake; say so.
+function configurationError(): ApiError | null {
+  if (SUPABASE_URL && !/^https?:\/\//.test(SUPABASE_URL)) {
+    return new ApiError(
+      'NOT_CONFIGURED',
+      'VITE_SUPABASE_URL precisa ser o endereço https://….supabase.co do projeto; parece ter recebido outro valor (a chave?).',
+      0,
+    )
+  }
+  if (SUPABASE_KEY && /^https?:\/\//.test(SUPABASE_KEY)) {
+    return new ApiError('NOT_CONFIGURED', 'VITE_SUPABASE_ANON_KEY recebeu um endereço; ela precisa ser a chave pública do projeto.', 0)
+  }
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    return new ApiError(
+      'NOT_CONFIGURED',
+      'Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env para conectar o Readler.',
+      0,
+    )
+  }
+  return null
+}
+
+/** The project URL and public key, or the configuration error to show. */
+function config(): { url: string; key: string } {
+  const error = configurationError()
+  if (error) throw error
+  return { url: SUPABASE_URL as string, key: SUPABASE_KEY as string }
+}
+
 // DeepL and Tatoeba answer from Europe, so running these two functions in
 // Frankfurt is about half a second faster per call than the region nearest
 // the browser. Override with VITE_FUNCTIONS_REGION if that ever changes.
@@ -71,21 +100,15 @@ const FUNCTIONS_REGION = import.meta.env.VITE_FUNCTIONS_REGION ?? 'eu-central-1'
 const PINNED: readonly FunctionName[] = ['translate', 'examples']
 
 async function call<T>(name: FunctionName, body?: unknown, signal?: AbortSignal): Promise<T> {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    throw new ApiError(
-      'NOT_CONFIGURED',
-      'Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env para conectar o Readler.',
-      0,
-    )
-  }
+  const { url, key } = config()
 
   let res: Response
   try {
-    res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+    res = await fetch(`${url}/functions/v1/${name}`, {
       method: body === undefined ? 'GET' : 'POST',
       headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
+        apikey: key,
+        Authorization: `Bearer ${key}`,
         ...(PINNED.includes(name) ? { 'x-region': FUNCTIONS_REGION } : {}),
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       },
@@ -124,10 +147,11 @@ function fallbackMessage(status: number): string {
  * their cold start. Fire and forget.
  */
 export function warmUp(): void {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return
+  if (configurationError()) return
+  const { url, key } = config()
   for (const name of PINNED) {
-    fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'x-region': FUNCTIONS_REGION },
+    fetch(`${url}/functions/v1/${name}`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}`, 'x-region': FUNCTIONS_REGION },
       priority: 'low',
     }).catch(() => {})
   }
