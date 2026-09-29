@@ -43,7 +43,7 @@ export function TranslatePage() {
         )}
         <Composer />
         <Interlinear />
-        <ReaderActions hint="Toque numa palavra para abrir a margem" />
+        <ReaderActions />
         {!wide && <MobileStudy />}
       </div>
       {wide && <StudyRail />}

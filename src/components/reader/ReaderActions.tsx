@@ -1,12 +1,12 @@
-import { Check, Copy } from 'lucide-react'
+import { Check, Copy, MousePointerClick } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslator } from '../../hooks/useTranslator'
 import { announce } from '../../lib/announce'
 import { Button } from '../Button'
 import { SpeakButton } from '../SpeakButton'
 
-/** Listen, listen slowly and copy, for the whole translation. */
-export function ReaderActions({ hint }: { hint?: string }) {
+/** Listen, listen slowly and copy, for the whole translation, plus the hint to tap a word. */
+export function ReaderActions() {
   const translator = useTranslator()
   const result = translator.error ? null : translator.result
   const [copied, setCopied] = useState(false)
@@ -43,7 +43,13 @@ export function ReaderActions({ hint }: { hint?: string }) {
       >
         {copied ? 'Copiado' : 'Copiar tradução'}
       </Button>
-      {hint && <span className="ml-auto hidden text-[13px] text-subtle lg:inline">{hint}</span>}
+      {!translator.focus && (
+        <p className="inline-flex items-center gap-2 rounded-full bg-hue/10 py-2 pl-3 pr-4 text-[14px] font-medium text-ink lg:ml-auto">
+          <MousePointerClick size={17} strokeWidth={1.9} aria-hidden className="shrink-0 text-hue" />
+          <span className="hidden lg:inline">Clique em uma palavra para abrir ao lado</span>
+          <span className="lg:hidden">Toque em uma palavra para abrir embaixo</span>
+        </p>
+      )}
     </div>
   )
 }
