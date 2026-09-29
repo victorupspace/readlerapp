@@ -22,7 +22,8 @@ function load(key: string, request: ExamplesRequest): Promise<Explanation> {
       .examples(request)
       .then((response) => {
         const data: Explanation = { kind: 'word', grammar: null, examples: response.examples, context: null }
-        writeExplanation(key, data)
+        // An empty answer may be a passing Tatoeba hiccup: keep it for this session only.
+        if (data.examples.length > 0) writeExplanation(key, data)
         return data
       })
       .finally(() => inFlight.delete(key))
