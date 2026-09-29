@@ -1,5 +1,5 @@
-export type SourceLang = 'auto' | 'PT' | 'EN' | 'FR' | 'DE'
-export type TargetLang = 'PT-BR' | 'EN-US' | 'EN-GB' | 'FR' | 'DE'
+export type SourceLang = 'auto' | 'PT' | 'EN' | 'FR' | 'DE' | 'IT'
+export type TargetLang = 'PT-BR' | 'EN-US' | 'EN-GB' | 'FR' | 'DE' | 'IT'
 export type Formality = 'prefer_more' | 'prefer_less'
 
 export interface LanguageOption<T extends string> {
@@ -13,6 +13,7 @@ export const SOURCE_LANGUAGES: readonly LanguageOption<SourceLang>[] = [
   { code: 'EN', label: 'English' },
   { code: 'FR', label: 'Français' },
   { code: 'DE', label: 'Deutsch' },
+  { code: 'IT', label: 'Italiano' },
 ]
 
 export const TARGET_LANGUAGES: readonly LanguageOption<TargetLang>[] = [
@@ -21,6 +22,7 @@ export const TARGET_LANGUAGES: readonly LanguageOption<TargetLang>[] = [
   { code: 'EN-GB', label: 'English (UK)' },
   { code: 'FR', label: 'Français' },
   { code: 'DE', label: 'Deutsch' },
+  { code: 'IT', label: 'Italiano' },
 ]
 
 export const DEFAULT_SOURCE: SourceLang = 'auto'
@@ -45,15 +47,15 @@ export function isPortuguese(code: string): boolean {
   return baseLang(code) === 'PT'
 }
 
-/** French, German or English: the languages being studied. */
+/** French, German, English or Italian: the languages being studied. */
 export function isStudyLang(code: string): boolean {
   const base = baseLang(code)
-  return base === 'FR' || base === 'DE' || base === 'EN'
+  return base === 'FR' || base === 'DE' || base === 'EN' || base === 'IT'
 }
 
-/** Formal / informal is offered for French (tu/vous) and German (du/Sie). */
+/** Formal / informal is offered for French (tu/vous), German (du/Sie) and Italian (tu/Lei). */
 export function supportsFormality(target: TargetLang): boolean {
-  return target === 'FR' || target === 'DE'
+  return target === 'FR' || target === 'DE' || target === 'IT'
 }
 
 /** Target code for any language code; English keeps the preferred variant. */
@@ -67,6 +69,8 @@ export function toTargetLang(code: string, english: TargetLang = 'EN-US'): Targe
       return 'FR'
     case 'DE':
       return 'DE'
+    case 'IT':
+      return 'IT'
     default:
       return null
   }
@@ -75,7 +79,7 @@ export function toTargetLang(code: string, english: TargetLang = 'EN-US'): Targe
 /** Source code for any language code (DeepL source languages have no variants). */
 export function toSourceLang(code: string): Exclude<SourceLang, 'auto'> | null {
   const base = baseLang(code)
-  return base === 'PT' || base === 'EN' || base === 'FR' || base === 'DE' ? base : null
+  return base === 'PT' || base === 'EN' || base === 'FR' || base === 'DE' || base === 'IT' ? base : null
 }
 
 const NATIVE_NAMES: Record<string, string> = {
@@ -83,6 +87,7 @@ const NATIVE_NAMES: Record<string, string> = {
   EN: 'English',
   FR: 'Français',
   DE: 'Deutsch',
+  IT: 'Italiano',
 }
 
 const displayNames = new Intl.DisplayNames(['pt-BR'], { type: 'language' })
@@ -114,6 +119,8 @@ export function bcp47(code: string): string {
       return 'fr-FR'
     case 'DE':
       return 'de-DE'
+    case 'IT':
+      return 'it-IT'
     default:
       return baseLang(code).toLowerCase()
   }
@@ -137,6 +144,8 @@ export function languageHue(code: string): string {
       return 'var(--hue-de)'
     case 'EN':
       return 'var(--hue-en)'
+    case 'IT':
+      return 'var(--hue-it)'
     default:
       return 'var(--hue-pt)'
   }

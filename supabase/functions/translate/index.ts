@@ -14,8 +14,8 @@ const MAX_CHARS = 5000;
 const HOURLY_CHAR_BUDGET = 60_000;
 const HOUR = 60 * 60 * 1000;
 
-// Formal / informal is offered for French (tu/vous) and German (du/Sie).
-const FORMALITY_TARGETS: ReadonlySet<TargetLang> = new Set(["FR", "DE"]);
+// Formal / informal is offered for French (tu/vous), German (du/Sie) and Italian (tu/Lei).
+const FORMALITY_TARGETS: ReadonlySet<TargetLang> = new Set(["FR", "DE", "IT"]);
 
 interface DeepLTranslation {
   translations?: { detected_source_language: string; text: string }[];

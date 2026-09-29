@@ -1,6 +1,6 @@
 // DeepL codes supported by Readler. Source codes have no regional variant.
-export const SOURCE_LANGS = ["PT", "EN", "FR", "DE"] as const;
-export const TARGET_LANGS = ["PT-BR", "EN-US", "EN-GB", "FR", "DE"] as const;
+export const SOURCE_LANGS = ["PT", "EN", "FR", "DE", "IT"] as const;
+export const TARGET_LANGS = ["PT-BR", "EN-US", "EN-GB", "FR", "DE", "IT"] as const;
 
 export type SourceLang = (typeof SOURCE_LANGS)[number];
 export type TargetLang = (typeof TARGET_LANGS)[number];

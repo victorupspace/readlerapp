@@ -29,6 +29,7 @@
   --hue-fr: #2c5be8;
   --hue-de: #8f5f00;
   --hue-en: #0c7f6f;
+  --hue-it: #b8225a;
   --hue-pt: #6b7280;
   --hue: var(--hue-fr);
   --danger: #b42318;
@@ -52,6 +53,7 @@
   --hue-fr: #7da0ff;
   --hue-de: #f2c14e;
   --hue-en: #5bd0bc;
+  --hue-it: #ff9ec4;
   --hue-pt: #9aa1b0;
   --danger: #ff8a80;
   --shadow-card: 0 8px 24px -20px rgb(0 0 0 / 0.6);

@@ -2,7 +2,7 @@
 
 *Leia, traduza, aprenda.*
 
-A personal translator for studying French, German and English from Brazilian Portuguese. Write or paste a text and read it as a bilingual edition: each sentence in Portuguese with its translation right beneath, the line in the language you study set large, every word tappable. Tapping a word fills the **study margin** (a column on desktop, a sheet on phones) with the word, its meaning, example sentences with Portuguese, and, with Claude configured, a **Verbete**: grammar notes (gender, plural, separable or irregular verbs) and a short context note. Save words and examples to your vocabulary; export it to Anki.
+A personal translator for studying French, German, English and Italian from Brazilian Portuguese. Write or paste a text and read it as a bilingual edition: each sentence in Portuguese with its translation right beneath, the line in the language you study set large, every word tappable. Tapping a word fills the **study margin** (a column on desktop, a sheet on phones) with the word, its meaning, example sentences with Portuguese, and, with Claude configured, a **Verbete**: grammar notes (gender, plural, separable or irregular verbs) and a short context note. Save words and examples to your vocabulary; export it to Anki.
 
 Single user by design: no accounts and no database. History and vocabulary live in your browser (localStorage). The DeepL and Anthropic keys stay on the server, inside Supabase Edge Functions.
 
@@ -85,7 +85,7 @@ Function contracts:
 
 | Function | Input | Output |
 | --- | --- | --- |
-| `translate` (POST) | `{ text, source_lang, target_lang, formality }`. `source_lang` is `null` to detect; `formality` is `prefer_more` or `prefer_less` and applies to FR and DE | `{ translation, detected_source_lang }` |
+| `translate` (POST) | `{ text, source_lang, target_lang, formality }`. `source_lang` is `null` to detect; `formality` is `prefer_more` or `prefer_less` and applies to FR, DE and IT | `{ translation, detected_source_lang }` |
 | `usage` (GET) | none | `{ character_count, character_limit }` |
 | `explain` (POST) | `{ text, translation, source_lang, target_lang }` | `{ kind, grammar, examples: [{ target, pt }], context }` |
 | `explain` (GET) | none | `{ available }`, false while `ANTHROPIC_API_KEY` is not set |
@@ -187,8 +187,8 @@ These measures stop casual abuse, not a determined attacker: outside a browser, 
 - **Listen** uses the browser's speech synthesis with an fr-FR, de-DE, en-US/en-GB or pt-BR voice, plus a slower option on the translation. Voice quality depends on the voices installed on your device.
 - **Reading view:** the text and its translation are paired sentence by sentence (paragraphs first, then sentences; where the two sides split differently, the whole paragraph becomes one pair, so nothing is misaligned). The line in the language being studied is the big one; the Portuguese line sits above it.
 - **Study margin:** tapping a word translates it into Portuguese and looks up its examples; on desktop the margin is a column that stays in view, on phones a sheet. With nothing tapped, the margin shows the entry for the text itself when it is a single word (Tatoeba) or a short text (Verbete).
-- **Colour names the language:** the interface is neutral; French is blue, German amber, English teal. The hue shows on the wordmark dot, the language pair, word underlines, vocabulary cards and history rows, and follows the language you are studying.
-- **Speed:** short texts and finished sentences translate 300 ms after you stop typing (600 ms for longer texts), pasting translates at once, and repeated texts come from a local cache (`readler:translate-cache`) without touching DeepL. The `translate` and `examples` functions are pinned to `eu-central-1`, next to DeepL and Tatoeba, which is about half a second faster per call from Brazil than the default region; the app also pings them on load so the first call is warm. Example lookups start as soon as the translation arrives, or in parallel with it when the typed word is already in French, German or English.
+- **Colour names the language:** the interface is neutral; French is blue, German amber, English teal, Italian raspberry. The hue shows on the wordmark dot, the language pair, word underlines, vocabulary cards and history rows, and follows the language you are studying.
+- **Speed:** short texts and finished sentences translate 300 ms after you stop typing (600 ms for longer texts), pasting translates at once, and repeated texts come from a local cache (`readler:translate-cache`) without touching DeepL. The `translate` and `examples` functions are pinned to `eu-central-1`, next to DeepL and Tatoeba, which is about half a second faster per call from Brazil than the default region; the app also pings them on load so the first call is warm. Example lookups start as soon as the translation arrives, or in parallel with it when the typed word is already in French, German, English or Italian.
 - **Shortcut:** Ctrl/Cmd + Enter translates immediately.
 
 ## Your data

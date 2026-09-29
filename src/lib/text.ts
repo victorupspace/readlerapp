@@ -57,7 +57,7 @@ export function glossaryLetter(term: string): string {
 
 // A leading article doesn't stop "le pont" or "die Brücke" from counting as one word.
 const LEADING_ARTICLE =
-  /^(?:(?:le|la|les|un|une|des|der|die|das|den|dem|ein|eine|einen|einem|the|an?|o|os|as|um|uma)\s+|l['’])/iu
+  /^(?:(?:le|la|les|un|une|des|der|die|das|den|dem|ein|eine|einen|einem|the|an?|o|os|as|um|uma|il|lo|i|gli|uno)\s+|l['’])/iu
 
 /** The word itself when the text is a single word (optionally with an article), else null. */
 export function singleWord(text: string): string | null {

@@ -1,7 +1,7 @@
 // examples: short example sentences for a single word, with their Portuguese
 // translations, from Tatoeba (community sentences, CC BY 2.0 FR). Used under
 // the translation when the Verbete (Claude) is not configured.
-// Input:  { word, lang }   lang: FR, DE or EN (any variant)
+// Input:  { word, lang }   lang: FR, DE, EN or IT (any variant)
 // Output: { examples: [{ target, pt }], source: "tatoeba" }
 // GET answers { ok: true }: the app pings it on load so the first lookup is warm.
 import { createHandler, HttpError } from "../_shared/http.ts";
@@ -9,7 +9,7 @@ import { createHandler, HttpError } from "../_shared/http.ts";
 const MAX_WORD = 40;
 const MAX_EXAMPLES = 2;
 const MAX_WORDS_PER_SENTENCE = 12;
-const TATOEBA_LANGS: Record<string, string> = { FR: "fra", DE: "deu", EN: "eng" };
+const TATOEBA_LANGS: Record<string, string> = { FR: "fra", DE: "deu", EN: "eng", IT: "ita" };
 
 // Tatoeba searches take one to two seconds; repeats are served from memory
 // for as long as this instance lives.

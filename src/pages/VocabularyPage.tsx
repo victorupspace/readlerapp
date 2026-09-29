@@ -11,7 +11,7 @@ import { formatRelative } from '../lib/format'
 import { baseLang, bcp47, languageHue, languageName } from '../lib/languages'
 import { foldForSearch } from '../lib/text'
 
-const LANGUAGE_ORDER = ['FR', 'DE', 'EN']
+const LANGUAGE_ORDER = ['FR', 'DE', 'EN', 'IT']
 
 function countLabel(count: number): string {
   return count === 1 ? '1 palavra ou expressão' : `${count} palavras e expressões`

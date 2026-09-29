@@ -4,6 +4,7 @@ import { Segmented } from './Segmented'
 const PRONOUNS: Record<string, { informal: string; formal: string }> = {
   FR: { informal: 'tu', formal: 'vous' },
   DE: { informal: 'du', formal: 'Sie' },
+  IT: { informal: 'tu', formal: 'Lei' },
 }
 
 interface FormalityToggleProps {
@@ -13,7 +14,7 @@ interface FormalityToggleProps {
   className?: string
 }
 
-/** The pronoun itself is the label: tu | vous, du | Sie (DeepL prefer_less / prefer_more). */
+/** The pronoun itself is the label: tu | vous, du | Sie, tu | Lei (DeepL prefer_less / prefer_more). */
 export function FormalityToggle({ value, onChange, targetLang, className }: FormalityToggleProps) {
   const pronouns = PRONOUNS[targetLang]
   if (!pronouns) return null
