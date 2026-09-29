@@ -1,4 +1,4 @@
-import { Fragment, useRef, type KeyboardEvent } from 'react'
+import { useRef, type KeyboardEvent } from 'react'
 import { cx } from '../lib/misc'
 
 export interface SegmentedOption<T extends string> {
@@ -15,10 +15,7 @@ interface SegmentedProps<T extends string> {
   className?: string
 }
 
-/**
- * Single choice set in small caps, "FORMAL · INFORMAL", the current one
- * underlined in the accent. A radio group: arrow keys move the selection.
- */
+/** Single choice inside a pill, "tu | vous". A radio group: arrow keys move the selection. */
 export function Segmented<T extends string>({ label, value, options, onChange, className }: SegmentedProps<T>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -42,37 +39,29 @@ export function Segmented<T extends string>({ label, value, options, onChange, c
       role="radiogroup"
       aria-label={label}
       onKeyDown={onKeyDown}
-      className={cx('inline-flex shrink-0 items-center', className)}
+      className={cx('inline-flex h-10 shrink-0 items-center gap-0.5 rounded-full bg-field p-1', className)}
     >
       {options.map((option, index) => {
         const checked = option.value === value
         return (
-          <Fragment key={option.value}>
-            {index > 0 && (
-              <span aria-hidden className="px-1 text-[13px] text-subtle">
-                ·
-              </span>
+          <button
+            key={option.value}
+            ref={(element) => {
+              refs.current[index] = element
+            }}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            tabIndex={checked ? 0 : -1}
+            title={option.title}
+            onClick={() => onChange(option.value)}
+            className={cx(
+              'h-8 whitespace-nowrap rounded-full px-3.5 text-[14px] transition-[background-color,color] duration-150',
+              checked ? 'bg-surface font-semibold text-ink shadow-[0_1px_2px_rgb(21_24_33/0.12)]' : 'font-medium text-muted hover:text-ink',
             )}
-            <button
-              ref={(element) => {
-                refs.current[index] = element
-              }}
-              type="button"
-              role="radio"
-              aria-checked={checked}
-              tabIndex={checked ? 0 : -1}
-              title={option.title}
-              onClick={() => onChange(option.value)}
-              className={cx(
-                'label-caps relative h-11 whitespace-nowrap rounded-md px-1.5 transition-colors duration-150',
-                checked
-                  ? 'text-ink after:absolute after:inset-x-1.5 after:bottom-[11px] after:h-px after:bg-accent'
-                  : 'text-muted hover:text-ink',
-              )}
-            >
-              {option.label}
-            </button>
-          </Fragment>
+          >
+            {option.label}
+          </button>
         )
       })}
     </div>

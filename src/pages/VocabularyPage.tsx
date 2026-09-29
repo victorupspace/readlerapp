@@ -1,59 +1,26 @@
-import { Download, Search } from 'lucide-react'
+import { BookOpen, Download, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { ActionLink } from '../components/ActionLink'
+import { Button } from '../components/Button'
+import { Chip } from '../components/Chip'
 import { DeleteButton, EmptyState, PageHeader, pageClass } from '../components/PageLayout'
-import { Segmented } from '../components/Segmented'
-import { useMediaQuery } from '../hooks/useMediaQuery'
+import { SpeakButton } from '../components/SpeakButton'
+import { useTranslator } from '../hooks/useTranslator'
 import { removeEntry, useVocabulary, type VocabularyEntry } from '../hooks/useVocabulary'
 import { downloadText, toAnkiCsv } from '../lib/csv'
-import { formatDate } from '../lib/format'
-import { baseLang, bcp47, languageName } from '../lib/languages'
-import { foldForSearch, glossaryLetter } from '../lib/text'
+import { formatRelative } from '../lib/format'
+import { baseLang, bcp47, languageHue, languageName } from '../lib/languages'
+import { foldForSearch } from '../lib/text'
 
-const LANGUAGE_ORDER = ['EN', 'FR', 'DE']
-const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true })
-
-interface LetterGroup {
-  letter: string
-  entries: VocabularyEntry[]
-}
+const LANGUAGE_ORDER = ['FR', 'DE', 'EN']
 
 function countLabel(count: number): string {
   return count === 1 ? '1 palavra ou expressão' : `${count} palavras e expressões`
-}
-
-/** Alphabetical groups, "#" (digits and symbols) last. */
-function groupByLetter(entries: VocabularyEntry[]): LetterGroup[] {
-  const sorted = [...entries].sort((a, b) => collator.compare(a.term, b.term))
-  const groups = new Map<string, VocabularyEntry[]>()
-  for (const entry of sorted) {
-    const letter = glossaryLetter(entry.term)
-    groups.set(letter, [...(groups.get(letter) ?? []), entry])
-  }
-  return [...groups]
-    .sort(([a], [b]) => (a === '#' ? 1 : b === '#' ? -1 : collator.compare(a, b)))
-    .map(([letter, items]) => ({ letter, entries: items }))
-}
-
-/** Splits the groups into two columns of roughly the same length, keeping the alphabet in order. */
-function splitColumns(groups: LetterGroup[]): LetterGroup[][] {
-  const weight = (group: LetterGroup) => group.entries.length + 1
-  const total = groups.reduce((sum, group) => sum + weight(group), 0)
-  const first: LetterGroup[] = []
-  const second: LetterGroup[] = []
-  let used = 0
-  for (const group of groups) {
-    ;(used < total / 2 ? first : second).push(group)
-    used += weight(group)
-  }
-  return second.length > 0 ? [first, second] : [first]
 }
 
 export function VocabularyPage() {
   const entries = useVocabulary()
   const [query, setQuery] = useState('')
   const [language, setLanguage] = useState('all')
-  const wide = useMediaQuery('(min-width: 768px)')
 
   const languages = useMemo(() => {
     const present = [...new Set(entries.map((entry) => baseLang(entry.termLang)))]
@@ -73,88 +40,70 @@ export function VocabularyPage() {
     })
   }, [entries, query, activeLanguage])
 
-  const groups = useMemo(() => groupByLetter(filtered), [filtered])
-  const columns = useMemo(() => (wide ? splitColumns(groups) : [groups]), [groups, wide])
-
   const exportLabel = `Exportar ${countLabel(filtered.length)} como CSV para o Anki`
 
   return (
     <div className={pageClass}>
       <PageHeader
         title="Vocabulário"
-        subtitle={entries.length ? countLabel(entries.length) : 'Palavras e expressões que você salvar'}
+        subtitle={entries.length ? countLabel(entries.length) : 'As palavras e expressões que você salvar ficam aqui'}
         action={
           entries.length > 0 && (
-            <ActionLink
+            <Button
               aria-label={exportLabel}
               title={exportLabel}
-              icon={<Download size={15} strokeWidth={1.75} aria-hidden />}
+              icon={<Download size={16} strokeWidth={1.8} aria-hidden />}
               disabled={filtered.length === 0}
               onClick={() => downloadText('readler-vocabulario.csv', toAnkiCsv(filtered))}
-              className="-mx-2 self-start sm:self-auto"
+              className="self-start sm:self-auto"
             >
-              Exportar CSV
-            </ActionLink>
+              Exportar para o Anki
+            </Button>
           )
         }
       />
 
       {entries.length === 0 ? (
         <EmptyState
-          title="Nenhuma palavra salva ainda."
-          hint="Toque numa palavra da tradução, use Salvar ao pé da tradução ou salve um exemplo do verbete para guardar aqui."
+          title="Nenhuma palavra salva ainda"
+          hint="Na leitura, toque numa palavra e use Salvar palavra na margem. Os exemplos também podem ser salvos."
         />
       ) : (
         <>
-          <div className="mt-8 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <label className="flex h-11 items-center gap-2.5 border-b border-line transition-colors duration-150 focus-within:border-line-focus sm:w-80">
-              <Search size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-subtle" />
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="flex h-10 w-full items-center gap-2.5 rounded-full border border-line bg-surface px-4 transition-colors duration-150 focus-within:border-line-strong sm:w-80">
+              <Search size={16} strokeWidth={1.8} aria-hidden className="shrink-0 text-subtle" />
               <span className="sr-only">Buscar no vocabulário</span>
               <input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Buscar palavra ou tradução"
-                className="h-full w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-subtle focus-visible:outline-none"
+                className="h-full w-full bg-transparent text-[14px] text-ink outline-none placeholder:text-subtle focus-visible:outline-none"
               />
             </label>
             {languages.length > 1 && (
-              <Segmented
-                label="Filtrar por idioma"
-                value={activeLanguage}
-                onChange={setLanguage}
-                className="-mx-1.5 self-start sm:self-auto"
-                options={[
-                  { value: 'all', label: 'Todos' },
-                  ...languages.map((code) => ({ value: code, label: languageName(code) })),
-                ]}
-              />
+              <div className="flex flex-wrap gap-1.5 sm:ml-1">
+                <Chip selected={activeLanguage === 'all'} onClick={() => setLanguage('all')}>
+                  Todos
+                </Chip>
+                {languages.map((code) => (
+                  <Chip key={code} selected={activeLanguage === code} dot={languageHue(code)} onClick={() => setLanguage(code)}>
+                    {languageName(code)}
+                  </Chip>
+                ))}
+              </div>
             )}
           </div>
 
           {filtered.length === 0 ? (
-            <p className="mt-12 text-center text-[15px] text-muted">
-              Nada encontrado para “{query.trim()}”.
-            </p>
+            <p className="mt-12 text-center text-[15px] text-muted">Nada encontrado para “{query.trim()}”.</p>
           ) : (
-            <div className="mt-8 grid gap-x-14 md:grid-cols-2">
-              {columns.map((column, index) => (
-                <div key={index}>
-                  {column.map((group) => (
-                    <section key={group.letter} aria-label={`Letra ${group.letter}`} className="pt-8 first:pt-0">
-                      <h2 className="border-b border-line pb-2 font-display text-[1.75rem] font-semibold leading-none text-accent">
-                        {group.letter}
-                      </h2>
-                      <ul>
-                        {group.entries.map((entry) => (
-                          <GlossaryEntry key={entry.id} entry={entry} />
-                        ))}
-                      </ul>
-                    </section>
-                  ))}
-                </div>
+            <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filtered.map((entry) => (
+                <VocabularyCard key={entry.id} entry={entry} />
               ))}
-            </div>
+            </ul>
           )}
         </>
       )}
@@ -162,35 +111,46 @@ export function VocabularyPage() {
   )
 }
 
-function GlossaryEntry({ entry }: { entry: VocabularyEntry }) {
+function VocabularyCard({ entry }: { entry: VocabularyEntry }) {
+  const { openInReader } = useTranslator()
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 py-4 [&+li]:border-t [&+li]:border-line">
-      <div className="min-w-0">
-        <p className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-          <span lang={bcp47(entry.termLang)} className="font-display text-[1.1875rem] font-semibold leading-snug text-ink">
-            {entry.term}
-          </span>
-          <span className="label-caps text-subtle">{languageName(entry.termLang)}</span>
-        </p>
-        <p lang={bcp47(entry.translationLang)} className="mt-0.5 text-[15px] leading-relaxed text-muted">
-          {entry.translation}
-        </p>
-        {entry.example && (
-          <div className="mt-2.5 border-l border-line pl-3">
-            <p lang={bcp47(entry.termLang)} className="font-display text-[1.0625rem] font-medium leading-relaxed text-ink">
-              {entry.example.target}
-            </p>
-            <p lang="pt-BR" className="text-[14px] leading-relaxed text-muted">
-              {entry.example.pt}
-            </p>
-          </div>
-        )}
-      </div>
-      <div className="-mr-2 -mt-1.5 flex flex-col items-end">
-        <DeleteButton label={`Excluir “${entry.term}”`} onConfirm={() => removeEntry(entry.id)} />
-        <time dateTime={new Date(entry.createdAt).toISOString()} className="pr-2 text-[12px] tabular-nums text-subtle">
-          {formatDate(entry.createdAt)}
+    <li className="flex min-h-[196px] flex-col gap-2.5 rounded-2xl border border-line bg-surface p-5 shadow-card">
+      <div className="flex items-center gap-2 text-[13px] text-muted">
+        <span aria-hidden className="size-2 rounded-full" style={{ background: languageHue(entry.termLang) }} />
+        {languageName(entry.termLang)}
+        <time dateTime={new Date(entry.createdAt).toISOString()} className="ml-auto text-subtle">
+          {formatRelative(entry.createdAt)}
         </time>
+      </div>
+      <p lang={bcp47(entry.termLang)} className="text-[26px] font-semibold leading-[1.15] tracking-[-0.01em] text-ink text-pretty">
+        {entry.term}
+      </p>
+      <p lang={bcp47(entry.translationLang)} className="text-[15px] leading-snug text-muted text-pretty">
+        {entry.translation}
+      </p>
+      {entry.example && (
+        <div className="mt-1 flex flex-col gap-0.5">
+          <p lang={bcp47(entry.termLang)} className="text-[14px] leading-[1.45] text-ink text-pretty">
+            {entry.example.target}
+          </p>
+          <p lang="pt-BR" className="text-[13px] leading-[1.45] text-muted text-pretty">
+            {entry.example.pt}
+          </p>
+        </div>
+      )}
+      <div className="-mb-1.5 -ml-2 mt-auto flex items-center gap-0.5 pt-2">
+        <SpeakButton variant="text" size="sm" id={`vocab-${entry.id}`} text={entry.term} lang={entry.termLang} label={`Ouvir ${entry.term}`} />
+        <Button
+          variant="text"
+          size="sm"
+          icon={<BookOpen size={14} strokeWidth={1.8} aria-hidden />}
+          onClick={() => openInReader(entry.term, entry.termLang)}
+        >
+          Ver na leitura
+        </Button>
+        <span className="ml-auto">
+          <DeleteButton label={`Excluir “${entry.term}”`} onConfirm={() => removeEntry(entry.id)} />
+        </span>
       </div>
     </li>
   )

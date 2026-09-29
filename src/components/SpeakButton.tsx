@@ -1,6 +1,6 @@
 import { Snail, Square, Volume2 } from 'lucide-react'
 import { NORMAL_RATE, SLOW_RATE, useSpeech } from '../hooks/useSpeech'
-import { ActionLink } from './ActionLink'
+import { Button } from './Button'
 import { IconButton } from './IconButton'
 
 interface SpeakButtonProps {
@@ -11,10 +11,12 @@ interface SpeakButtonProps {
   lang: string
   /** Accessible name, e.g. "Ouvir tradução". */
   label: string
+  /** Visible text of the pill variants; defaults to Ouvir / Devagar. */
+  children?: string
   slow?: boolean
   disabled?: boolean
-  /** "text" is a small-caps word (Ouvir / Devagar); "icon" a round icon button. */
-  variant?: 'icon' | 'text'
+  variant?: 'icon' | 'ghost' | 'text'
+  size?: 'md' | 'sm'
   className?: string
 }
 
@@ -23,9 +25,11 @@ export function SpeakButton({
   text,
   lang,
   label,
+  children,
   slow = false,
   disabled = false,
-  variant = 'icon',
+  variant = 'ghost',
+  size = 'md',
   className,
 }: SpeakButtonProps) {
   const { supported, speakingId, speak } = useSpeech()
@@ -35,40 +39,36 @@ export function SpeakButton({
   const name = speaking ? 'Parar leitura' : label
   const isDisabled = disabled || !text.trim() || !lang
   const onClick = () => speak(id, text, lang, slow ? SLOW_RATE : NORMAL_RATE)
+  const iconSize = variant === 'icon' ? 19 : 16
+  const icon = speaking ? (
+    <Square size={iconSize - 5} fill="currentColor" aria-hidden />
+  ) : slow ? (
+    <Snail size={iconSize} strokeWidth={1.8} aria-hidden />
+  ) : (
+    <Volume2 size={iconSize} strokeWidth={1.8} aria-hidden />
+  )
 
-  if (variant === 'text') {
+  if (variant === 'icon') {
     return (
-      <ActionLink
-        aria-label={name}
-        title={name}
-        active={speaking}
-        disabled={isDisabled}
-        onClick={onClick}
-        className={className}
-        icon={
-          speaking ? (
-            <Square size={11} fill="currentColor" aria-hidden />
-          ) : slow ? (
-            <Snail size={15} strokeWidth={1.75} aria-hidden />
-          ) : (
-            <Volume2 size={15} strokeWidth={1.75} aria-hidden />
-          )
-        }
-      >
-        {speaking ? 'Parar' : slow ? 'Devagar' : 'Ouvir'}
-      </ActionLink>
+      <IconButton label={name} active={speaking} disabled={isDisabled} onClick={onClick} className={className}>
+        {icon}
+      </IconButton>
     )
   }
 
   return (
-    <IconButton label={name} active={speaking} disabled={isDisabled} onClick={onClick} className={className}>
-      {speaking ? (
-        <Square size={15} fill="currentColor" aria-hidden />
-      ) : slow ? (
-        <Snail size={20} strokeWidth={1.75} aria-hidden />
-      ) : (
-        <Volume2 size={20} strokeWidth={1.75} aria-hidden />
-      )}
-    </IconButton>
+    <Button
+      variant={variant}
+      size={size}
+      aria-label={name}
+      title={name}
+      active={speaking}
+      disabled={isDisabled}
+      onClick={onClick}
+      icon={icon}
+      className={className}
+    >
+      {speaking ? 'Parar' : (children ?? (slow ? 'Devagar' : 'Ouvir'))}
+    </Button>
   )
 }

@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="google" content="notranslate" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#111216" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3f4f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f131c" media="(prefers-color-scheme: dark)" />
     <meta property="og:title" content="Readler" />
     <meta property="og:description" content="Leia, traduza, aprenda." />
     <meta property="og:type" content="website" />
@@ -37,7 +37,7 @@
         if (stored === 'dark' || stored === 'light') {
           var metas = document.querySelectorAll('meta[name="theme-color"]');
           for (var i = 0; i < metas.length; i++) {
-            metas[i].setAttribute('content', dark ? '#111216' : '#f6f4ef');
+            metas[i].setAttribute('content', dark ? '#0f131c' : '#f3f4f7');
           }
         }
       })();

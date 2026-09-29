@@ -1,8 +1,16 @@
 import { createContext, useContext } from 'react'
-import type { ExplainRequest } from '../lib/api'
 import type { Formality, SourceLang, TargetLang } from '../lib/languages'
 import type { TranslationResult } from '../types'
 import type { HistoryEntry } from './useHistory'
+
+/** A word tapped in the reading line, shown in the study margin. */
+export interface WordFocus {
+  word: string
+  /** Language of the word: the language being studied. */
+  lang: string
+  /** Index of the sentence pair it was tapped in. */
+  sentence: number
+}
 
 export interface Translator {
   sourceText: string
@@ -20,14 +28,18 @@ export interface Translator {
   error: string | null
   translateNow: () => void
 
+  /** The language being studied right now: the side of the pair that isn't Portuguese. */
+  studyLang: string
+
   canSwap: boolean
   swap: () => void
   clear: () => void
   reopen: (entry: HistoryEntry) => void
+  /** Loads a saved term into the reader, translating it into Portuguese. */
+  openInReader: (term: string, termLang: string) => void
 
-  /** A tapped word shown in "Exemplo e contexto" instead of the whole text. */
-  wordFocus: ExplainRequest | null
-  focusWord: (request: ExplainRequest) => void
+  focus: WordFocus | null
+  focusWord: (focus: WordFocus | null) => void
 }
 
 export const TranslatorContext = createContext<Translator | null>(null)

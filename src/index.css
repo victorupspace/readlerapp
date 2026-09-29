@@ -12,62 +12,66 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------- Theme tokens ----------
-   Every color is a CSS variable; components only use the semantic names below.
-   All text tokens keep at least 4.5:1 contrast on every surface in both themes. */
+   The interface is neutral; colour appears only where it names a language.
+   `--hue` is the language being studied right now (set on <html> by the app)
+   and drives the wordmark dot, word underlines and saved states. */
 
 :root {
-  --page: #f6f4ef;
+  --canvas: #f3f4f7;
   --surface: #ffffff;
-  --tint: #f8f7fb;
   --raised: #ffffff;
-  --segment: #ffffff;
-  --ink: #1b1a18;
-  --muted: #5c5851;
-  --subtle: #6f6a62;
-  --line: #e6e2d9;
-  --line-strong: #d2ccc0;
-  --line-focus: color-mix(in oklab, #3a4093 42%, #e6e2d9);
-  --accent: #3a4093;
-  --accent-strong: #2e3378;
-  --on-accent: #ffffff;
-  --danger: #a3322a;
-  --shadow-card: 0 1px 2px rgb(40 32 20 / 0.04), 0 16px 40px -24px rgb(40 32 20 / 0.16);
-  --shadow-pop: 0 2px 6px rgb(40 32 20 / 0.06), 0 18px 40px -12px rgb(40 32 20 / 0.2);
+  --field: #e6e8ee;
+  --ink: #151821;
+  --muted: #5f6675;
+  --subtle: #6b7285;
+  --line: rgb(21 24 33 / 0.1);
+  --line-strong: rgb(21 24 33 / 0.28);
+  --hue-fr: #2c5be8;
+  --hue-de: #8f5f00;
+  --hue-en: #0c7f6f;
+  --hue-pt: #6b7280;
+  --hue: var(--hue-fr);
+  --danger: #b42318;
+  --shadow-card: 0 8px 24px -20px rgb(21 24 33 / 0.25);
+  --shadow-rail: 0 16px 40px -28px rgb(21 24 33 / 0.35);
+  --shadow-pop: 0 2px 6px rgb(21 24 33 / 0.06), 0 18px 40px -12px rgb(21 24 33 / 0.2);
+  --shadow-sheet: 0 -24px 60px rgb(21 24 33 / 0.25);
   color-scheme: light;
 }
 
 .dark {
-  --page: #111216;
-  --surface: #17181d;
-  --tint: #1b1d24;
-  --raised: #22242c;
-  --segment: #2f323c;
-  --ink: #eceae4;
-  --muted: #ada9a1;
-  --subtle: #949088;
-  --line: #2a2c33;
-  --line-strong: #3b3e47;
-  --line-focus: color-mix(in oklab, #a9b1f6 38%, #2a2c33);
-  --accent: #a9b1f6;
-  --accent-strong: #c3c9fa;
-  --on-accent: #111216;
-  --danger: #f2a194;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -24px rgb(0 0 0 / 0.6);
+  --canvas: #0f131c;
+  --surface: #171c27;
+  --raised: #1f2533;
+  --field: #1f2533;
+  --ink: #f1f2f5;
+  --muted: #a7adbb;
+  --subtle: #8a91a3;
+  --line: rgb(255 255 255 / 0.1);
+  --line-strong: rgb(255 255 255 / 0.28);
+  --hue-fr: #7da0ff;
+  --hue-de: #f2c14e;
+  --hue-en: #5bd0bc;
+  --hue-pt: #9aa1b0;
+  --danger: #ff8a80;
+  --shadow-card: 0 8px 24px -20px rgb(0 0 0 / 0.6);
+  --shadow-rail: 0 16px 40px -28px rgb(0 0 0 / 0.7);
   --shadow-pop: 0 2px 6px rgb(0 0 0 / 0.3), 0 18px 40px -12px rgb(0 0 0 / 0.65);
+  --shadow-sheet: 0 -24px 60px rgb(0 0 0 / 0.45);
   color-scheme: dark;
 }
 
 @theme {
-  --font-sans: "Ubuntu", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Barlow", "Ubuntu", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: "Newsreader Wordmark", ui-serif, Georgia, "Times New Roman", serif;
 
   --ease-calm: cubic-bezier(0.2, 0, 0, 1);
 
   --animate-fade-in: fade-in 200ms var(--ease-calm) both;
   --animate-fade: fade 180ms var(--ease-calm) both;
-  --animate-swap-in: swap-in 200ms var(--ease-calm) both;
   --animate-pop-in: pop-in 150ms var(--ease-calm) both;
+  --animate-rise: rise 220ms var(--ease-calm) both;
+  --animate-swap-in: swap-in 200ms var(--ease-calm) both;
   --animate-pulse-soft: pulse-soft 1.6s ease-in-out infinite;
 
   @keyframes fade-in {
@@ -90,10 +94,10 @@
     }
   }
 
-  @keyframes swap-in {
+  @keyframes pop-in {
     from {
       opacity: 0;
-      transform: rotate(-40deg) scale(0.8);
+      transform: translateY(-4px) scale(0.98);
     }
     to {
       opacity: 1;
@@ -101,10 +105,21 @@
     }
   }
 
-  @keyframes pop-in {
+  @keyframes rise {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+
+  @keyframes swap-in {
     from {
       opacity: 0;
-      transform: translateY(-4px) scale(0.98);
+      transform: rotate(-40deg) scale(0.8);
     }
     to {
       opacity: 1;
@@ -124,33 +139,30 @@
 }
 
 @theme inline {
-  --color-page: var(--page);
+  --color-canvas: var(--canvas);
   --color-surface: var(--surface);
-  --color-tint: var(--tint);
   --color-raised: var(--raised);
-  --color-segment: var(--segment);
+  --color-field: var(--field);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
-  --color-line-focus: var(--line-focus);
-  --color-accent: var(--accent);
-  --color-accent-strong: var(--accent-strong);
-  --color-on-accent: var(--on-accent);
+  --color-hue: var(--hue);
   --color-danger: var(--danger);
   --shadow-card: var(--shadow-card);
+  --shadow-rail: var(--shadow-rail);
   --shadow-pop: var(--shadow-pop);
+  --shadow-sheet: var(--shadow-sheet);
 }
 
 /* ---------- Base ---------- */
 
 @layer base {
   html {
-    background-color: var(--page);
+    background-color: var(--canvas);
     color: var(--ink);
     font-family: var(--font-sans);
-    font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -161,21 +173,21 @@
 
   body {
     min-height: 100dvh;
-    background-color: var(--page);
+    background-color: var(--canvas);
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--hue);
     outline-offset: 2px;
   }
 
   ::selection {
-    background-color: color-mix(in oklab, var(--accent) 24%, transparent);
+    background-color: color-mix(in oklab, var(--hue) 24%, transparent);
   }
 
   textarea,
   input {
-    caret-color: var(--accent);
+    caret-color: var(--hue);
   }
 
   button:not(:disabled),
@@ -198,32 +210,38 @@
   }
 }
 
-/* Small-caps style labels (uppercase, letter-spaced): running heads, actions, section labels. */
-@utility label-caps {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-variant-numeric: tabular-nums;
+/* A tappable word in the reading line: quiet at rest, underlined in the
+   language's hue on hover, tinted when it is the one open in the margin. */
+.word {
+  border-radius: 5px;
+  padding: 0 2px;
+  margin: 0 -2px;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+  transition:
+    text-decoration-color 150ms var(--ease-calm),
+    background-color 150ms var(--ease-calm);
 }
 
-@utility label-caps-lg {
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-variant-numeric: tabular-nums;
+.word:hover,
+.word:focus-visible {
+  text-decoration-color: var(--hue);
 }
 
-/* Thin indeterminate progress line (top of the translation panel). */
+.word[aria-expanded="true"] {
+  background-color: color-mix(in oklab, var(--hue) 14%, transparent);
+  text-decoration-color: var(--hue);
+}
+
+/* Thin indeterminate progress line (top of the reading column). */
 .progress-line {
   position: absolute;
   inset-block: 0;
   width: 35%;
   border-radius: 9999px;
-  background: var(--accent);
+  background: var(--hue);
   animation: progress-slide 1.1s var(--ease-calm) infinite;
 }
 

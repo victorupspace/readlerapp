@@ -2,14 +2,14 @@
 
 *Leia, traduza, aprenda.*
 
-A personal translator for studying French, German and English from Brazilian Portuguese. It translates with DeepL and, under every short translation, shows a **Verbete** (dictionary entry): two natural example sentences, grammar notes when they matter (gender, plural, separable or irregular verbs), and a short context note written by Claude. Tap any word in a translation to see it on its own and save it to your vocabulary. Export the vocabulary to Anki.
+A personal translator for studying French, German and English from Brazilian Portuguese. Write or paste a text and read it as a bilingual edition: each sentence in Portuguese with its translation right beneath, the line in the language you study set large, every word tappable. Tapping a word fills the **study margin** (a column on desktop, a sheet on phones) with the word, its meaning, example sentences with Portuguese, and, with Claude configured, a **Verbete**: grammar notes (gender, plural, separable or irregular verbs) and a short context note. Save words and examples to your vocabulary; export it to Anki.
 
 Single user by design: no accounts and no database. History and vocabulary live in your browser (localStorage). The DeepL and Anthropic keys stay on the server, inside Supabase Edge Functions.
 
 ## Stack
 
 - React 19, Vite 8, TypeScript, Tailwind CSS 4 (theme tokens as CSS variables), lucide-react icons
-- Ubuntu (text) and Barlow (headings and labels), bundled with the app; Newsreader only for the wordmark, as a 6 KB subset (no external font requests, works offline)
+- Schibsted Grotesk for everything, bundled with the app; Newsreader only for the wordmark, as a 6 KB subset (no external font requests, works offline)
 - Supabase Edge Functions (Deno) as thin proxies: `translate` and `usage` (DeepL API), `explain` (Anthropic Messages API, `claude-haiku-4-5-20251001`), `examples` (Tatoeba)
 - Installable PWA: `public/manifest.webmanifest` and a small service worker (`public/sw.js`)
 
@@ -19,11 +19,10 @@ Single user by design: no accounts and no database. History and vocabulary live 
 index.html                  meta tags + inline script that applies the theme before first paint
 public/                     manifest, service worker, favicon and app icons
 src/
-  components/               UI: top bar, language dropdown, segmented controls, buttons…
-    translator/             translator card: panels, swap button, tappable words, word popover
-    explain/                "Verbete": the dictionary entry under the translation
-  hooks/                    useTranslation, useExplain, useSpeech, useTheme, useLocalStorage,
-                            useHistory, useVocabulary, useUsage, useHashRoute, useTranslator
+  components/               UI: top bar, language pair, buttons, chips, menus…
+    reader/                 the reading screen: composer, interlinear sentences, study margin
+  hooks/                    useTranslation, useStudySubject, useExplain, useExamples, useSpeech,
+                            useTheme, useLocalStorage, useHistory, useVocabulary, useTranslator
   lib/                      typed API client, languages, caches, CSV export, formatting
   pages/                    Traduzir, Vocabulário, Histórico
   index.css                 design tokens (light and dark) and base styles
@@ -182,10 +181,13 @@ These measures stop casual abuse, not a determined attacker: outside a browser, 
 - **Single words without the Verbete:** when you translate one word (an article is fine: "a ponte", "die Brücke"), the app shows up to two short example sentences with Portuguese translations under the translation, fetched from [Tatoeba](https://tatoeba.org) (community sentences, CC BY 2.0 FR) through the `examples` function. No key needed; coverage depends on the word. With the Verbete configured, Claude's examples take its place.
 - The **Verbete** appears on its own for short texts (up to about 80 characters or 10 words), after a short pause so words typed in passing aren't looked up. Longer texts show a **Gerar verbete** button instead. Results are cached in `readler:explain-cache` by text, language pair and translation, so the same lookup is never paid for twice.
 - The examples are always in the language you are studying, which is the side of the pair that isn't Portuguese. Translating FR → PT still gives French examples with Portuguese underneath.
-- **Tapping a word** shows its translation into Portuguese. When the translation is itself in Portuguese, it shows the word in the source language instead.
+- **Vocabulary** is a deck of cards, filterable by language, with Ouvir, Ver na leitura (opens the term in the reader) and export to Anki. **History** is a diary grouped by day with the time and the language pair of each reading.
 - If the detected language is already the target language, Readler switches the target automatically, as DeepL does (French text with target French switches to Portuguese). A target you pick by hand is kept until you edit the text.
 - **History** keeps one entry per piece of text you work on, not one per keystroke, and keeps the last 100 (favorites are dropped last). Reopening an entry reuses the stored translation and costs no DeepL characters.
 - **Listen** uses the browser's speech synthesis with an fr-FR, de-DE, en-US/en-GB or pt-BR voice, plus a slower option on the translation. Voice quality depends on the voices installed on your device.
+- **Reading view:** the text and its translation are paired sentence by sentence (paragraphs first, then sentences; where the two sides split differently, the whole paragraph becomes one pair, so nothing is misaligned). The line in the language being studied is the big one; the Portuguese line sits above it.
+- **Study margin:** tapping a word translates it into Portuguese and looks up its examples; on desktop the margin is a column that stays in view, on phones a sheet. With nothing tapped, the margin shows the entry for the text itself when it is a single word (Tatoeba) or a short text (Verbete).
+- **Colour names the language:** the interface is neutral; French is blue, German amber, English teal. The hue shows on the wordmark dot, the language pair, word underlines, vocabulary cards and history rows, and follows the language you are studying.
 - **Speed:** short texts and finished sentences translate 300 ms after you stop typing (600 ms for longer texts), pasting translates at once, and repeated texts come from a local cache (`readler:translate-cache`) without touching DeepL. The `translate` and `examples` functions are pinned to `eu-central-1`, next to DeepL and Tatoeba, which is about half a second faster per call from Brazil than the default region; the app also pings them on load so the first call is warm. Example lookups start as soon as the translation arrives, or in parallel with it when the typed word is already in French, German or English.
 - **Shortcut:** Ctrl/Cmd + Enter translates immediately.
 

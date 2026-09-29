@@ -1,9 +1,9 @@
 import type { Formality, TargetLang } from '../lib/languages'
 import { Segmented } from './Segmented'
 
-const PRONOUNS: Record<string, Record<Formality, string>> = {
-  FR: { prefer_more: 'vous', prefer_less: 'tu' },
-  DE: { prefer_more: 'Sie', prefer_less: 'du' },
+const PRONOUNS: Record<string, { informal: string; formal: string }> = {
+  FR: { informal: 'tu', formal: 'vous' },
+  DE: { informal: 'du', formal: 'Sie' },
 }
 
 interface FormalityToggleProps {
@@ -13,9 +13,10 @@ interface FormalityToggleProps {
   className?: string
 }
 
-/** Formal / Informal for French (vous/tu) and German (Sie/du), via DeepL prefer_more / prefer_less. */
+/** The pronoun itself is the label: tu | vous, du | Sie (DeepL prefer_less / prefer_more). */
 export function FormalityToggle({ value, onChange, targetLang, className }: FormalityToggleProps) {
   const pronouns = PRONOUNS[targetLang]
+  if (!pronouns) return null
   return (
     <Segmented
       label="Tratamento"
@@ -23,8 +24,8 @@ export function FormalityToggle({ value, onChange, targetLang, className }: Form
       onChange={onChange}
       className={className}
       options={[
-        { value: 'prefer_more', label: 'Formal', title: pronouns && `Formal (${pronouns.prefer_more})` },
-        { value: 'prefer_less', label: 'Informal', title: pronouns && `Informal (${pronouns.prefer_less})` },
+        { value: 'prefer_less', label: pronouns.informal, title: 'Informal' },
+        { value: 'prefer_more', label: pronouns.formal, title: 'Formal' },
       ]}
     />
   )

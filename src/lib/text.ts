@@ -64,3 +64,45 @@ export function singleWord(text: string): string | null {
   const word = normalizeSpaces(text).replace(LEADING_ARTICLE, '').replace(/[.!?…,;:]+$/u, '')
   return /^[\p{L}\p{M}]+(?:['’-][\p{L}\p{M}]+)*$/u.test(word) ? word : null
 }
+
+// Sentence ends: terminal punctuation (optionally followed by a closing quote or
+// bracket), then whitespace, then a capital letter, digit or opening quote.
+// A short capitalised abbreviation before the full stop (Sr., Dr., Mme.) doesn't count.
+const SENTENCE_END = /(?<!\b\p{Lu}\p{Ll}{0,2}\.)(?<=[.!?…][»”’")\]]?)\s+(?=["«“‘([]?[\p{Lu}\p{N}])/u
+
+/** Sentences of one paragraph, trimmed. */
+export function splitSentences(paragraph: string): string[] {
+  return paragraph
+    .split(SENTENCE_END)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean)
+}
+
+export interface SentencePair {
+  source: string
+  translation: string
+}
+
+/**
+ * Pairs a text with its translation sentence by sentence, paragraph by
+ * paragraph. Where the two sides don't split the same way, the whole
+ * paragraph (or text) becomes one pair, so nothing is ever misaligned.
+ */
+export function alignSentences(source: string, translation: string): SentencePair[] {
+  const paragraphs = (text: string) =>
+    text
+      .split(/\n+/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean)
+  const sourceParagraphs = paragraphs(source)
+  const translationParagraphs = paragraphs(translation)
+  if (sourceParagraphs.length !== translationParagraphs.length) {
+    return [{ source: normalizeSpaces(source), translation: normalizeSpaces(translation) }]
+  }
+  return sourceParagraphs.flatMap((paragraph, index) => {
+    const a = splitSentences(paragraph)
+    const b = splitSentences(translationParagraphs[index])
+    if (a.length !== b.length) return [{ source: paragraph, translation: translationParagraphs[index] }]
+    return a.map((sentence, position) => ({ source: sentence, translation: b[position] }))
+  })
+}

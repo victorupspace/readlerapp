@@ -10,17 +10,18 @@ interface LanguageSelectProps<T extends string> {
   value: T
   options: readonly LanguageOption<T>[]
   onChange: (value: T) => void
-  /** Replaces the selected label on the button (e.g. "Français · detectado"). */
+  /** Replaces the selected label on the button (e.g. "Français, detectado"). */
   display?: ReactNode
   /** Draws a hairline under this option. */
   dividerAfter?: T
+  /** CSS colour of a dot before the name, naming the language being studied. */
+  dot?: string
+  /** Quieter text, for the side not being studied. */
+  quiet?: boolean
   className?: string
 }
 
-/**
- * Running head of a page: the language in small caps with a chevron, opening a
- * listbox. Keyboard: arrows, Home/End, type-ahead, Enter, Esc.
- */
+/** Language name with a chevron, opening a listbox. Keyboard: arrows, Home/End, type-ahead, Enter, Esc. */
 export function LanguageSelect<T extends string>({
   id,
   label,
@@ -29,6 +30,8 @@ export function LanguageSelect<T extends string>({
   onChange,
   display,
   dividerAfter,
+  dot,
+  quiet = false,
   className,
 }: LanguageSelectProps<T>) {
   const [open, setOpen] = useState(false)
@@ -114,7 +117,7 @@ export function LanguageSelect<T extends string>({
   }
 
   return (
-    <div ref={rootRef} className={cx('relative -ml-2 min-w-0', className)}>
+    <div ref={rootRef} className={cx('relative min-w-0', className)}>
       <span id={`${id}-label`} className="sr-only">
         {label}
       </span>
@@ -128,11 +131,15 @@ export function LanguageSelect<T extends string>({
         aria-labelledby={`${id}-label ${id}-button`}
         onClick={() => (open ? close(false) : openList())}
         onKeyDown={onButtonKeyDown}
-        className="label-caps inline-flex h-11 max-w-full items-center gap-1.5 rounded-md px-2 text-ink transition-[background-color,transform] duration-150 hover:bg-ink/[0.05] active:scale-[0.98]"
+        className={cx(
+          'inline-flex h-9 max-w-full items-center gap-2 rounded-full px-2.5 text-[15px] transition-[background-color,transform] duration-150 hover:bg-ink/5 active:scale-[0.98]',
+          quiet ? 'font-medium text-muted' : 'font-semibold text-ink',
+        )}
       >
+        {dot && <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: dot }} />}
         <span className="truncate">{display ?? options[selectedIndex]?.label}</span>
         <ChevronDown
-          size={14}
+          size={15}
           strokeWidth={2}
           aria-hidden
           className={cx('shrink-0 text-subtle transition-transform duration-200', open && 'rotate-180')}
@@ -148,7 +155,7 @@ export function LanguageSelect<T extends string>({
           aria-labelledby={`${id}-label`}
           aria-activedescendant={`${id}-option-${activeIndex}`}
           onKeyDown={onListKeyDown}
-          className="absolute left-0 top-full z-40 mt-1 min-w-56 origin-top-left animate-pop-in rounded-lg border border-line bg-raised p-1.5 shadow-pop outline-none"
+          className="absolute left-0 top-full z-40 mt-2 min-w-56 origin-top-left animate-pop-in rounded-2xl border border-line bg-raised p-1.5 shadow-pop outline-none"
         >
           {options.map((option, index) => {
             const selected = option.code === value
@@ -161,15 +168,15 @@ export function LanguageSelect<T extends string>({
                 onClick={() => choose(index)}
                 onPointerMove={() => setActiveIndex(index)}
                 className={cx(
-                  'relative flex h-11 select-none items-center justify-between gap-6 rounded-md px-3 text-[15px]',
-                  index === activeIndex && 'bg-ink/[0.05]',
-                  selected ? 'font-medium text-ink' : 'text-muted',
+                  'relative flex h-11 select-none items-center justify-between gap-6 rounded-xl px-3 text-[15px]',
+                  index === activeIndex && 'bg-ink/5',
+                  selected ? 'font-semibold text-ink' : 'text-muted',
                   dividerAfter === option.code &&
                     'mb-2 after:pointer-events-none after:absolute after:inset-x-3 after:-bottom-1 after:h-px after:bg-line',
                 )}
               >
                 {option.label}
-                {selected && <Check size={16} className="text-accent" aria-hidden />}
+                {selected && <Check size={16} className="text-hue" aria-hidden />}
               </li>
             )
           })}

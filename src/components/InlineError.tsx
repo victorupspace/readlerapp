@@ -18,7 +18,7 @@ export function InlineError({ message, onRetry, className }: InlineErrorProps) {
           <button
             type="button"
             onClick={onRetry}
-            className="mt-1 rounded text-[14px] font-medium text-accent underline-offset-4 hover:underline"
+            className="mt-1 rounded text-[14px] font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
           >
             Tentar novamente
           </button>

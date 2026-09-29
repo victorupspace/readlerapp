@@ -1,22 +1,26 @@
-import { useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react'
+import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react'
+import { languageHue } from '../../lib/languages'
 import { cx } from '../../lib/misc'
 import { tokenize } from '../../lib/text'
 
-interface TappableTextProps {
+interface StudyLineProps {
   text: string
+  /** Code of the language being studied, e.g. "FR" or "EN-GB". */
   lang: string
-  /** Token index of the word whose popover is open. */
-  selectedIndex: number | null
-  onWord: (word: string, index: number, anchor: HTMLElement) => void
+  /** BCP 47 tag for the lang attribute. */
+  langTag: string
+  /** Word currently open in the margin (only when tapped in this line). */
+  selectedWord: string | null
+  onWord: (word: string) => void
   className?: string
 }
 
 /**
- * The translation, with every word tappable. Keyboard: Tab reaches one word,
- * arrows move between words, Enter or Space opens it. Dragging to select text
- * still works and doesn't open anything.
+ * One sentence in the language being studied, every word a button. Keyboard:
+ * Tab reaches one word per line, arrows move along the line, Enter or Space
+ * opens the word. Dragging to select text still works and opens nothing.
  */
-export function TappableText({ text, lang, selectedIndex, onWord, className }: TappableTextProps) {
+export function StudyLine({ text, lang, langTag, selectedWord, onWord, className }: StudyLineProps) {
   const tokens = useMemo(() => tokenize(text), [text])
   const wordIndexes = useMemo(() => tokens.flatMap((token, index) => (token.word ? [index] : [])), [tokens])
   const [focusIndex, setFocusIndex] = useState(-1)
@@ -38,7 +42,7 @@ export function TappableText({ text, lang, selectedIndex, onWord, className }: T
     if (selection && !selection.isCollapsed) return
     const index = Number(element.dataset.token)
     setFocusIndex(index)
-    onWord(tokens[index].text, index, element)
+    onWord(tokens[index].text)
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -48,12 +52,10 @@ export function TappableText({ text, lang, selectedIndex, onWord, className }: T
     const position = wordIndexes.indexOf(index)
     switch (event.key) {
       case 'ArrowRight':
-      case 'ArrowDown':
         event.preventDefault()
         moveTo(wordIndexes[position + 1])
         break
       case 'ArrowLeft':
-      case 'ArrowUp':
         event.preventDefault()
         moveTo(wordIndexes[position - 1])
         break
@@ -68,7 +70,7 @@ export function TappableText({ text, lang, selectedIndex, onWord, className }: T
       case 'Enter':
       case ' ':
         event.preventDefault()
-        onWord(tokens[index].text, index, element)
+        onWord(tokens[index].text)
         break
     }
   }
@@ -76,27 +78,24 @@ export function TappableText({ text, lang, selectedIndex, onWord, className }: T
   return (
     <p
       ref={containerRef}
-      lang={lang}
+      lang={langTag}
       onClick={onClick}
       onKeyDown={onKeyDown}
+      style={{ '--hue': languageHue(lang) } as CSSProperties}
       className={cx('whitespace-pre-wrap break-words', className)}
     >
       {tokens.map((token, index) =>
         token.word ? (
-          <span
+          <button
             key={index}
+            type="button"
             data-token={index}
-            role="button"
             tabIndex={index === tabStop ? 0 : -1}
-            aria-haspopup="dialog"
-            aria-expanded={index === selectedIndex}
-            className={cx(
-              'rounded-[3px] decoration-subtle/70 decoration-dotted underline-offset-[5px] transition-colors duration-150 hover:underline focus-visible:outline-offset-1',
-              index === selectedIndex && 'bg-accent/12',
-            )}
+            aria-expanded={selectedWord !== null && token.text === selectedWord}
+            className="word font-[inherit] text-[length:inherit] leading-[inherit] text-inherit"
           >
             {token.text}
-          </span>
+          </button>
         ) : (
           token.text
         ),

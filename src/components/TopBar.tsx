@@ -1,15 +1,31 @@
 import { ROUTE_HREFS, type Route } from '../hooks/useHashRoute'
+import { useTranslator } from '../hooks/useTranslator'
 import { cx } from '../lib/misc'
+import { FormalityToggle } from './FormalityToggle'
+import { LanguagePair } from './LanguagePair'
 import { NAV_ITEMS } from './navigation'
 import { ThemeToggle } from './ThemeToggle'
 import { Wordmark } from './Wordmark'
 
 export function TopBar({ route }: { route: Route }) {
+  const translator = useTranslator()
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-page/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto flex h-14 w-full max-w-[1120px] items-center gap-12 px-4 sm:h-16 sm:px-6">
+    <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center gap-6 px-5 sm:px-8 lg:px-10">
         <Wordmark />
-        <nav aria-label="Principal" className="hidden h-full items-stretch gap-8 sm:flex">
+
+        {route === 'translate' && (
+          <div className="ml-2 hidden items-center gap-2.5 lg:flex">
+            <LanguagePair />
+            <FormalityToggle
+              value={translator.formality}
+              onChange={translator.setFormality}
+              targetLang={translator.targetLang}
+            />
+          </div>
+        )}
+
+        <nav aria-label="Principal" className="ml-auto hidden items-center gap-7 sm:flex">
           {NAV_ITEMS.map(({ route: itemRoute, label }) => {
             const current = itemRoute === route
             return (
@@ -18,19 +34,16 @@ export function TopBar({ route }: { route: Route }) {
                 href={ROUTE_HREFS[itemRoute]}
                 aria-current={current ? 'page' : undefined}
                 className={cx(
-                  'label-caps-lg relative inline-flex items-center transition-colors duration-150',
+                  'text-[15px] font-medium transition-colors duration-150',
                   current ? 'text-ink' : 'text-muted hover:text-ink',
                 )}
               >
                 {label}
-                {current && (
-                  <span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-accent" />
-                )}
               </a>
             )
           })}
         </nav>
-        <div className="-mr-2 ml-auto flex items-center">
+        <div className="ml-auto flex items-center sm:ml-0">
           <ThemeToggle />
         </div>
       </div>

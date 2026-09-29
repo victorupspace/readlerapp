@@ -6,7 +6,7 @@ import { useMediaQuery } from './useMediaQuery'
 export type Theme = 'light' | 'dark'
 
 // Browser UI color per theme; keep in sync with the inline script in index.html.
-const THEME_COLORS: Record<Theme, string> = { light: '#f6f4ef', dark: '#111216' }
+const THEME_COLORS: Record<Theme, string> = { light: '#f3f4f7', dark: '#0f131c' }
 
 const isStoredTheme = (value: unknown): value is Theme | null =>
   value === null || value === 'light' || value === 'dark'

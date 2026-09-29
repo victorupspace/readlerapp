@@ -1,8 +1,4 @@
-import '@fontsource/ubuntu/400.css'
-import '@fontsource/ubuntu/500.css'
-import '@fontsource/barlow/400.css'
-import '@fontsource/barlow/500.css'
-import '@fontsource/barlow/600.css'
+import '@fontsource-variable/schibsted-grotesk/wght.css'
 import './index.css'
 
 import { StrictMode } from 'react'

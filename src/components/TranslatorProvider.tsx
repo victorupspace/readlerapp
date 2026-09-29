@@ -3,8 +3,7 @@ import { navigate } from '../hooks/useHashRoute'
 import { addHistoryEntry, updateHistoryEntry, type HistoryEntry, type HistoryFields } from '../hooks/useHistory'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { rememberTranslation, translationKey, useTranslation } from '../hooks/useTranslation'
-import { TranslatorContext, type Translator } from '../hooks/useTranslator'
-import type { ExplainRequest } from '../lib/api'
+import { TranslatorContext, type Translator, type WordFocus } from '../hooks/useTranslator'
 import {
   baseLang,
   DEFAULT_FORMALITY,
@@ -13,6 +12,7 @@ import {
   isFormality,
   isPortuguese,
   isSourceLang,
+  isStudyLang,
   isTargetLang,
   supportsFormality,
   toSourceLang,
@@ -53,7 +53,7 @@ export function TranslatorProvider({ children }: { children: ReactNode }) {
   const [pair, setPair] = useLocalStorage(STORAGE_KEYS.languages, DEFAULT_PAIR, isLanguagePair)
   const [formality, setFormality] = useLocalStorage(STORAGE_KEYS.formality, DEFAULT_FORMALITY, isFormality)
   const [sourceText, setText] = useState('')
-  const [wordFocus, setWordFocus] = useState<ExplainRequest | null>(null)
+  const [focus, setFocus] = useState<WordFocus | null>(null)
   const { sourceLang, targetLang } = pair
 
   // Last foreign target and English variant, to return to them when switching.
@@ -110,6 +110,8 @@ export function TranslatorProvider({ children }: { children: ReactNode }) {
       } else {
         recordHistory(result)
       }
+      // A tapped word belongs to the translation it was tapped in.
+      setFocus(null)
       return true
     },
     [recordHistory, setPair],
@@ -122,13 +124,11 @@ export function TranslatorProvider({ children }: { children: ReactNode }) {
 
   const setSourceText = useCallback((text: string) => {
     setText(text)
-    setWordFocus(null)
     targetPickedRef.current = false
   }, [])
 
   const setSourceLang = useCallback(
     (next: SourceLang) => {
-      setWordFocus(null)
       setPair((current) => {
         if (next === 'auto' || baseLang(next) !== baseLang(current.targetLang)) return { ...current, sourceLang: next }
         // Picking the target language as source swaps the two sides.
@@ -146,7 +146,6 @@ export function TranslatorProvider({ children }: { children: ReactNode }) {
 
   const setTargetLang = useCallback(
     (next: TargetLang) => {
-      setWordFocus(null)
       targetPickedRef.current = true
       setPair((current) => {
         if (current.sourceLang === 'auto' || baseLang(current.sourceLang) !== baseLang(next)) {
@@ -164,6 +163,12 @@ export function TranslatorProvider({ children }: { children: ReactNode }) {
   const swapSource = toSourceLang(targetLang)
   const canSwap = swapTarget !== null && swapSource !== null && baseLang(swapTarget) !== swapSource
 
+  const studyLang = isPortuguese(targetLang)
+    ? resolvedSource && isStudyLang(resolvedSource)
+      ? resolvedSource
+      : DEFAULT_TARGET
+    : targetLang
+
   const swap = useCallback(() => {
     if (!resolvedSource || !swapSource) return
     const nextTarget = toTargetLang(resolvedSource, englishRef.current)
@@ -172,12 +177,11 @@ export function TranslatorProvider({ children }: { children: ReactNode }) {
     // Move the translation into the source, unless it lags behind what was typed.
     if (result && result.text === sourceText.trim()) setText(result.translation)
     sessionRef.current = null
-    setWordFocus(null)
   }, [resolvedSource, result, setPair, sourceText, swapSource])
 
   const clear = useCallback(() => {
     setText('')
-    setWordFocus(null)
+    setFocus(null)
     sessionRef.current = null
   }, [])
 
@@ -203,10 +207,20 @@ export function TranslatorProvider({ children }: { children: ReactNode }) {
       setPair({ sourceLang: entry.sourceLang, targetLang: entry.targetLang })
       if (entry.formality) setFormality(entry.formality)
       setText(entry.sourceText)
-      setWordFocus(null)
       navigate('translate')
     },
     [formality, setFormality, setPair],
+  )
+
+  const openInReader = useCallback(
+    (term: string, termLang: string) => {
+      sessionRef.current = null
+      targetPickedRef.current = true
+      setPair({ sourceLang: toSourceLang(termLang) ?? 'auto', targetLang: 'PT-BR' })
+      setText(term)
+      navigate('translate')
+    },
+    [setPair],
   )
 
   const value = useMemo<Translator>(
@@ -223,12 +237,14 @@ export function TranslatorProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       translateNow: flush,
+      studyLang,
       canSwap,
       swap,
       clear,
       reopen,
-      wordFocus,
-      focusWord: setWordFocus,
+      openInReader,
+      focus,
+      focusWord: setFocus,
     }),
     [
       sourceText,
@@ -243,11 +259,13 @@ export function TranslatorProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       flush,
+      studyLang,
       canSwap,
       swap,
       clear,
       reopen,
-      wordFocus,
+      openInReader,
+      focus,
     ],
   )
 

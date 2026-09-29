@@ -5,11 +5,9 @@ import { IconButton } from './IconButton'
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle: string; action?: ReactNode }) {
   return (
     <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="font-display text-[2.25rem] font-semibold leading-[1.1] tracking-[-0.01em] text-ink sm:text-[2.75rem]">
-          {title}
-        </h1>
-        <p className="mt-2 text-[15px] text-muted">{subtitle}</p>
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-[30px] font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-[36px]">{title}</h1>
+        <p className="text-[15px] text-muted">{subtitle}</p>
       </div>
       {action}
     </header>
@@ -18,8 +16,8 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
 
 export function EmptyState({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="mt-12 border-y border-line py-14 text-center">
-      <p className="font-display text-[1.375rem] font-medium text-ink">{title}</p>
+    <div className="mt-10 rounded-2xl border border-line bg-surface px-6 py-14 text-center">
+      <p className="text-[20px] font-semibold text-ink">{title}</p>
       <p className="mx-auto mt-2 max-w-sm text-[15px] leading-relaxed text-muted">{hint}</p>
     </div>
   )
@@ -45,7 +43,7 @@ export function DeleteButton({ label, onConfirm }: { label: string; onConfirm: (
         aria-label={`Confirmar: ${label}`}
         onClick={onConfirm}
         onBlur={() => setArmed(false)}
-        className="label-caps inline-flex h-11 shrink-0 items-center rounded-md px-2 text-danger transition-colors duration-150 hover:bg-danger/10"
+        className="inline-flex h-10 shrink-0 items-center rounded-full px-3 text-[13px] font-semibold text-danger transition-colors duration-150 hover:bg-danger/10"
       >
         Excluir?
       </button>
@@ -54,9 +52,9 @@ export function DeleteButton({ label, onConfirm }: { label: string; onConfirm: (
 
   return (
     <IconButton label={label} onClick={() => setArmed(true)}>
-      <Trash2 size={17} strokeWidth={1.75} aria-hidden />
+      <Trash2 size={17} strokeWidth={1.8} aria-hidden />
     </IconButton>
   )
 }
 
-export const pageClass = 'mx-auto w-full max-w-[1120px] px-4 pt-8 sm:px-6 sm:pt-14'
+export const pageClass = 'mx-auto w-full max-w-[1440px] px-5 pt-7 sm:px-8 sm:pt-10 lg:px-10'

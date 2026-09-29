@@ -8,11 +8,31 @@ export function resolvedSource(result: TranslationResult): string {
   return result.sourceLang === 'auto' ? result.detectedLang : result.sourceLang
 }
 
-/** Request for "Exemplo e contexto" about a translation; null when both sides are Portuguese. */
+/** Request for a Verbete about a translation; null when both sides are Portuguese. */
 export function explainRequestFor(result: TranslationResult): ExplainRequest | null {
   const source = resolvedSource(result)
   if (!source || (isPortuguese(source) && isPortuguese(result.targetLang))) return null
   return { text: result.text, translation: result.translation, source_lang: source, target_lang: result.targetLang }
+}
+
+export interface Headword {
+  /** The expression in the language being studied. */
+  text: string
+  lang: string
+  /** The other side of the pair. */
+  gloss: string
+  glossLang: string
+}
+
+/** Which side of a request is the headword: the study language, the other its gloss. */
+export function headwordOf(request: ExplainRequest): Headword {
+  const studyIsSource = studySide(request.target_lang) === 'source'
+  return {
+    text: studyIsSource ? request.text : request.translation,
+    lang: studyIsSource ? request.source_lang : request.target_lang,
+    gloss: studyIsSource ? request.translation : request.text,
+    glossLang: studyIsSource ? request.target_lang : request.source_lang,
+  }
 }
 
 /**

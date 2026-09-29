@@ -127,3 +127,17 @@ export function bcp47(code: string): string {
 export function studySide(targetLang: string): 'source' | 'target' {
   return isPortuguese(targetLang) ? 'source' : 'target'
 }
+
+/** CSS colour naming a language (a token, so it follows the theme). */
+export function languageHue(code: string): string {
+  switch (baseLang(code)) {
+    case 'FR':
+      return 'var(--hue-fr)'
+    case 'DE':
+      return 'var(--hue-de)'
+    case 'EN':
+      return 'var(--hue-en)'
+    default:
+      return 'var(--hue-pt)'
+  }
+}
